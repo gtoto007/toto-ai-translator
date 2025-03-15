@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "@mlc-ai/web-llm": "^0.2.78"
+  },
+  "devDependencies": {
+    "@parcel/config-webextension": "^2.13.3",
+    "@types/chrome": "^0.0.309",
+    "buffer": "^5.5.0||^6.0.0",
+    "parcel": "^2.13.3",
+    "process": "^0.11.10"
+  },
+  "scripts": {
+    "start": "parcel watch src/manifest.json --host localhost --config @parcel/config-webextension",
+    "build": "parcel build src/manifest.json --config @parcel/config-webextension --detailed-report --log-level verbose"
+  }
+}

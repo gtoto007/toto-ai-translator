@@ -1,0 +1,23 @@
+{
+    "name": "Toto Translator",
+    "description": "Use AI Local Assistent to translate some sentences into the page",
+    "version": "1.0",
+    "manifest_version": 3,
+    "background": {
+        "service_worker": "background.js"
+    },
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage"
+    ],
+    "content_scripts": [
+        {
+            "matches": ["https://app.caption-ed.com/*"],
+            "js": ["content.ts"]
+        }
+    ],
+    "action": {
+        "default_title": "Toto Translator"
+    }
+}
