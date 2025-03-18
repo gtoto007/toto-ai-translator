@@ -4,37 +4,24 @@
 console.log('Content script loaded');
 
 import {
-  CreateExtensionServiceWorkerMLCEngine,
-  MLCEngineInterface,
   InitProgressReport,
-  ChatCompletionMessageParam,
-  ResponseFormat
 } from "@mlc-ai/web-llm";
 
-const chatHistory: ChatCompletionMessageParam[] = [];
+import WebLLM from './WebLLM';
+
 
 
 const initProgressCallback = (report: InitProgressReport) => {
   console.log(report.progress);
 };
 
-// Create an async function to initialize the engine
-async function initializeEngine() {
-  const engine: MLCEngineInterface = await CreateExtensionServiceWorkerMLCEngine(
-    "Llama-3.1-8B-Instruct-q4f16_1-MLC",
-    { initProgressCallback: initProgressCallback },
-  );
-  return engine;
-}
-
 // Initialize the engine
-let engine: MLCEngineInterface | null = null;
+let  llm: WebLLM;
 
 // Immediately invoke async function to initialize the engine
 (async () => {
   try {
-    engine = await initializeEngine();
-    console.log('Engine initialized successfully');
+    llm = await WebLLM.createAsync(initProgressCallback);
 
     // Function to add button to a single paragraph
 function addButtonToParagraph(paragraph, index) {
@@ -64,7 +51,7 @@ function addButtonToParagraph(paragraph, index) {
     
     // Use the engine to translate the text
     try {
-      if (!engine) {
+      if (!llm) {
         console.log('Engine not initialized yet, please wait...');
         return;
       }
@@ -105,13 +92,13 @@ function addButtonToParagraph(paragraph, index) {
         `This text may contain words or phrases that were misheard or incorrectly transcribed. ` +
         `Use context and common sense to reconstruct the intended meaning. ` +
         `Once the text is correctly reconstructed, translate it into idiomatic and natural Italian. ` +
-        `Avoid to translate tecnhical terms such as test, codeception, keys, etc. ` +
         `The context is related to Software Development. ` +
+        `Avoid to translate tecnhical terms such as test, codeception, keys, etc. ` +
         `Provide only the final translated sentence and nothing else. ` +
         `Do not add any explanations, thoughts, or comments—just correct and translate. ` +
         `The sentence is: ${paragraphText}`;
 
-      await sendMessage(translationPrompt, (translation) => {
+      await llm.sendMessage(translationPrompt, (translation) => {
         // Clear the loading spinner and set the translation text
         pTranslation.textContent = translation; 
       });
@@ -188,37 +175,6 @@ function setupMutationObserver() {
   return observer;
 }
 
-async function sendMessage(message: string, callback) {
-  const chatHistory: ChatCompletionMessageParam[] = [];
-
-  chatHistory.push({ role: "user", content: message });
-
-  let response_format : ResponseFormat  = { type: 'text' }; 
-
-   // Send the chat completion message to the engine
-   let curMessage = "";
-   const completion = await engine.chat.completions.create({
-     stream: true,
-     messages: chatHistory,
-     response_format:response_format,
-   });
- 
-   // Update the answer as the model generates more text
-   for await (const chunk of completion) {
-
-     const curDelta = chunk.choices[0].delta.content;
-     if (curDelta) {
-       curMessage += curDelta;
-     }
-     callback(curMessage);
-     console.log( "chunk", chunk,curDelta,curMessage)
-     
-   }
-   message= await engine.getMessage();
-   console.log("engine.getMessage",message)
-   chatHistory.push({ role: "assistant", content: await engine.getMessage() });
-}
-
 // Run the initial setup when the page is loaded
 document.addEventListener('DOMContentLoaded', () => {
   // Add buttons to existing paragraphs
@@ -229,13 +185,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-  addButtonsToParagraphs();
-    
-  // Set up observer for future changes
-  setupMutationObserver();
-  } catch (error) {
-    console.error('Error initializing engine:', error);
-  }
+addButtonsToParagraphs();
+  
+// Set up observer for future changes
+setupMutationObserver();
+} catch (error) {
+  console.error('Error initializing engine:', error);
+}
 })();
 
 
