@@ -10,7 +10,8 @@
     "process": "^0.11.10"
   },
   "scripts": {
-    "start": "parcel watch src/manifest.json --host localhost --config @parcel/config-webextension",
-    "build": "parcel build src/manifest.json --config @parcel/config-webextension --detailed-report --log-level verbose"
+    "start": "parcel watch src/manifest.json",
+    "build:dev": "parcel build src/manifest.json --no-optimize --no-scope-hoist",
+    "build:prod": "parcel build src/manifest.json --detailed-report --log-level verbose"
   }
 }
