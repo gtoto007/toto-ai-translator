@@ -25,41 +25,39 @@ let  llm: WebLLM;
 
     // Function to add button to a single paragraph
 function addButtonToParagraph(paragraph, index) {
-  // Check if button already exists for this paragraph
-  const nextSibling = paragraph.nextSibling;
-  if (nextSibling && nextSibling.nodeName === 'BUTTON' && 
-      nextSibling.dataset.paragraphIndex !== undefined) {
-    return; // Button already exists, skip
+  if (paragraph.classList.contains('toto-translator-processed')) {
+    return; // Paragraph already processed, skip
   }
-  
+
+
   // Create a button element
   const button = document.createElement('button');
   button.textContent = 'Translate';
-  button.style.marginLeft = '10px';
-  button.style.fontSize = '12px';
-  button.style.padding = '2px 5px';
-  button.style.cursor = 'pointer';
   button.dataset.paragraphIndex = index;
-  
+  button.className = 'button-toto-translator'; // Use the new class instead of inline styles
+
+
+
   // Add click event listener to the button
   button.addEventListener('click', async function() {
     // Get the text of the paragraph
     const paragraphText = paragraph.textContent;
-    
+
     // Log the text to the console
     console.log(`Paragraph ${index + 1} text:`, paragraphText);
-    
+
     // Use the engine to translate the text
     try {
       if (!llm) {
         console.log('Engine not initialized yet, please wait...');
         return;
       }
-      
+
       // Implement translation logic here
       console.log('Translating text using the engine...');
       const pTranslation = document.createElement('div');
-      
+      pTranslation.className = 'toto-translator-container';
+
       // Create and show loading indicator
       const loadingSpinner = document.createElement('span');
       loadingSpinner.textContent = 'Translating ';
@@ -68,24 +66,24 @@ function addButtonToParagraph(paragraph, index) {
       loadingSpinner.style.marginLeft = '5px';
       loadingSpinner.style.fontStyle = 'italic';
       loadingSpinner.style.color = '#666';
-      
+
       // Add a simple animation
       const dots = document.createElement('span');
       dots.className = 'toto-loading-dots';
       dots.textContent = '';
       loadingSpinner.appendChild(dots);
-      
+
       // Animate the dots
       let dotsCount = 0;
       const dotsInterval = setInterval(() => {
         dots.textContent = '.'.repeat(dotsCount % 4);
         dotsCount++;
       }, 300);
-      
-      pTranslation.appendChild(loadingSpinner);
-      button.parentNode.insertBefore(pTranslation, button.nextSibling);
 
-      const translationPrompt = 
+      pTranslation.appendChild(loadingSpinner);
+      paragraph.parentNode.insertBefore(pTranslation, paragraph.nextSibling);
+
+      const translationPrompt =
         `You are the best Italian interpreter and transcription corrector. ` +
         `Your task is to first correct any transcription errors, missing punctuation, ` +
         `or unclear phrases in the given text to make it a complete and natural English sentence. ` +
@@ -100,35 +98,38 @@ function addButtonToParagraph(paragraph, index) {
 
       await llm.sendMessage(translationPrompt, (translation) => {
         // Clear the loading spinner and set the translation text
-        pTranslation.textContent = translation; 
+        pTranslation.textContent = translation;
       });
-      
+
       // Clear the interval when translation is complete
       clearInterval(dotsInterval);
-       
-      // Send message to background script (optional)
-      chrome.runtime.sendMessage({
-        action: 'logParagraph',
-        paragraphIndex: index,
-        paragraphText: paragraphText
-      }, function(response) {
-        // Handle response from background script (optional)
-        console.log('Background script response:', response);
-      });
+
     } catch (error) {
       console.error('Error during translation:', error);
     }
   });
-  
+
   // Insert the button after the paragraph
-  paragraph.parentNode.insertBefore(button, paragraph.nextSibling);
+  paragraph.appendChild(button);
+  // Add hover event listeners to the paragraph
+  paragraph.addEventListener('mouseenter', () => {
+    button.style.display = 'inline-block'; // Show the button
+  });
+
+  paragraph.classList.add('toto-translator-processed');
+
+
+  paragraph.addEventListener('mouseleave', () => {
+    button.style.display = 'none'; // Hide the button again
+  });
+
 }
 
 // Function to add buttons to all paragraphs
 function addButtonsToParagraphs() {
   // Get all paragraphs on the page
   const paragraphs = document.querySelectorAll('p');
-  
+
   // Loop through each paragraph
   paragraphs.forEach((paragraph, index) => {
     addButtonToParagraph(paragraph, index);
@@ -140,7 +141,7 @@ function setupMutationObserver() {
   // Create a new observer
   const observer = new MutationObserver((mutations) => {
     let shouldAddButtons = false;
-    
+
     // Check if any mutations added new paragraphs
     mutations.forEach((mutation) => {
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
@@ -157,13 +158,13 @@ function setupMutationObserver() {
         }
       }
     });
-    
+
     // If new paragraphs were added, add buttons to all paragraphs
     if (shouldAddButtons) {
       addButtonsToParagraphs();
     }
   });
-  
+
   // Start observing the document with the configured parameters
   observer.observe(document.body, {
     childList: true,      // Watch for changes in direct children
@@ -171,7 +172,7 @@ function setupMutationObserver() {
     attributes: false,    // Don't watch for changes in attributes
     characterData: false  // Don't watch for changes in text content
   });
-  
+
   return observer;
 }
 
@@ -179,19 +180,18 @@ function setupMutationObserver() {
 document.addEventListener('DOMContentLoaded', () => {
   // Add buttons to existing paragraphs
   addButtonsToParagraphs();
-  
+
   // Set up observer for future changes
   setupMutationObserver();
 });
 
 
 addButtonsToParagraphs();
-  
+
 // Set up observer for future changes
 setupMutationObserver();
 } catch (error) {
   console.error('Error initializing engine:', error);
 }
 })();
-
 

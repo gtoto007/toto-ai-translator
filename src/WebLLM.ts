@@ -28,7 +28,6 @@ export default class WebLLM {
             response_format: {type: 'text'},
         }
         const streamingCompletion = await this.engine.chat.completions.create(options);
-        console.log("sending message...");
 
         // Update the answer as the model generates more text
         let accumulatedResponse = "";

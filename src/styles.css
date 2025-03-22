@@ -1,0 +1,48 @@
+.toto-translator-container {
+  font-family: Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.9rem;
+  background-color: #f5f5f5;
+  color: #333;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  overflow-x: auto;
+}
+
+.button-toto-translator {
+  background-color: #FFFFFF;
+  border: 0;
+  position:absolute;
+  border-radius: .5rem;
+  box-sizing: border-box;
+  color: #111827;
+  font-family: "Inter var",ui-sans-serif,system-ui,-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+  font-weight: 600;
+  padding: .10rem .25rem;
+  font-size:0.75rem;
+  text-align: center;
+  text-decoration: none #D1D5DB solid;
+  text-decoration-thickness: auto;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  display: none;
+  margin-left: 10px;
+}
+
+.button-toto-translator:hover {
+  background-color: rgb(249,250,251);
+}
+
+.button-toto-translator:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.button-toto-translator:focus-visible {
+  box-shadow: none;
+}
+
