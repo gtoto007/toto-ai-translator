@@ -21,24 +21,58 @@ export default class WebLLM {
     }
 
     public async sendMessage(message: string, onResponseUpdate: (accumulatedResponse: string) => void) {
-
-        const options:ChatCompletionRequestStreaming={
-            stream: true,
-            messages: [{role: "user", content: message}],
-            response_format: {type: 'text'},
-        }
-        const streamingCompletion = await this.engine.chat.completions.create(options);
-
-        // Update the answer as the model generates more text
-        let accumulatedResponse = "";
-        for await (const chunk of streamingCompletion) {
-            const responseFragment = chunk.choices[0].delta.content;
-            if (responseFragment) {
-                accumulatedResponse += responseFragment;
+        try {
+            console.log("sending message:",message);
+            const options:ChatCompletionRequestStreaming={
+                stream: true,
+                messages: [{role: "user", content: message}],
+                response_format: {type: 'text'},
             }
-            onResponseUpdate(accumulatedResponse);
-        }
 
+            // Create a timeout promise that rejects after 10 seconds
+            const timeoutPromise = new Promise<any>((_, reject) => {
+                setTimeout(() => {
+                    reject(new Error('Translation request timed out after 10 seconds'));
+                }, 3000);
+            });
+
+            // Race between the actual request and the timeout
+            const streamingCompletion = await Promise.race([
+                this.engine.chat.completions.create(options),
+                timeoutPromise
+            ]);
+
+            // Update the answer as the model generates more text
+            let accumulatedResponse = "";
+            for await (const chunk of streamingCompletion) {
+                const responseFragment = chunk.choices[0].delta.content;
+                if (responseFragment) {
+                    accumulatedResponse += responseFragment;
+                }
+                onResponseUpdate(accumulatedResponse);
+            }
+        } catch (error) {
+            console.error('Error in sendMessage:', error);
+
+            // Check if the error is related to a closed message port or timeout
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (errorMessage.includes('port closed') ||
+                errorMessage.includes('disconnected') ||
+                errorMessage.includes('connection') ||
+                errorMessage.includes('timed out') ||
+                errorMessage.includes('terminated')) {
+
+                // Notify the caller about the connection issue
+                onResponseUpdate('Connection to the translation service was lost. Please try again.');
+
+                // Dispatch a custom event that content.ts can listen for
+                const reconnectEvent = new CustomEvent('webllm-connection-lost');
+                window.dispatchEvent(reconnectEvent);
+            } else {
+                // For other errors, just pass the message to the caller
+                onResponseUpdate('An error occurred during translation. Please try again.');
+            }
+        }
     }
 
 
