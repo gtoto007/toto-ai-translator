@@ -1,35 +1,31 @@
 "use strict";
 
-// Content script for Toto Translator
-console.log('Content script loaded');
-
-import {
-    InitProgressReport,
-} from "@mlc-ai/web-llm";
+import { ProgressBarUI } from './ProgressBarUI';
 
 import WebLLM from './WebLLM';
 
-
+// Create a progress bar element
+const progressBar = new ProgressBarUI();
 
 
 // Initialize the engine
 let llm: WebLLM;
 let isInitializing = false;
 
-// Immediately invoke async function to initialize the engine
 async function init() {
     if (isInitializing) {
         console.log('Engine initialization already in progress');
         return;
     }
-    
+
     isInitializing = true;
     try {
-        llm = await WebLLM.createAsync(initProgressCallback);
+        llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), 'Llama-3.1-8B-Instruct-q4f16_1-MLC');
+        progressBar.hide();
 
         // Run the initial setup when the page is loaded
         document.addEventListener('DOMContentLoaded', () => {
-            // Add buttons to existing paragraphs
+            // Add buttons to existing paragraphss
             addButtonsToParagraphs();
 
             // Set up observer for future changes
@@ -40,7 +36,7 @@ async function init() {
 
         // Set up observer for future changes
         setupMutationObserver();
-        
+
         console.log('WebLLM engine initialized successfully');
     } catch (error) {
         console.error('Error initializing engine:', error);
@@ -49,9 +45,7 @@ async function init() {
     }
 }
 
-const initProgressCallback = (report: InitProgressReport) => {
-    console.log(report.progress);
-};
+
 
 function addButtonsToParagraphs() {
     // Get all paragraphs on the page
@@ -223,13 +217,13 @@ function setupReconnectionHandlers() {
             init();
         }
     });
-    
+
     // Listen for custom connection lost events from WebLLM
     window.addEventListener('webllm-connection-lost', () => {
         console.log('WebLLM connection lost event received, attempting to reconnect...');
         // Set llm to null to force a complete reinitialization
         llm = null;
-        
+
         // Send a message to the background script to notify about the connection loss
         chrome.runtime.sendMessage({ type: 'webllm-connection-lost', timestamp: Date.now() }, (response) => {
             init();

@@ -29,7 +29,7 @@ By leveraging graphics acceleration, WebAssembly, and web workers, Toto Translat
 ## Loading the Extension
 1. Clone this repository
 ```bash
-git clone https://github.com/yourusername/toto-translator.git
+git clone https://github.com/gtoto007/toto-translator.git
 cd toto-translator
 ```
 2. Build this extension by run 'yarn install && yarn build:prod'
@@ -43,7 +43,7 @@ cd toto-translator
 [Instructions on how to use the extension once installed]
 # TODO
 
-- [ ] ux: show a progress bar when the AI model is in downloading and/or loading
+- [X] ux: show a progress bar when the AI model is in downloading and/or loading
 - [ ] refactor: instead of add a button for each paragraph, each the button when user click on "app icon" that appear when user hover the mouse on specif div element
 - [ ] refactor: reset worker logic
 - [ ] option ui: change language to translate

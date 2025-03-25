@@ -1,0 +1,75 @@
+import {InitProgressReport} from "@mlc-ai/web-llm";
+
+export class ProgressBarUI {
+    private progressBarContainer: HTMLElement | null = null;
+
+    public showProgress(report: InitProgressReport): void {
+        // Create progress bar container if it doesn't exist
+        if (!this.progressBarContainer) {
+           this.progressBarContainer = this.buildContainer();
+           document.body.appendChild(this.progressBarContainer);
+        }
+
+        // Update progress bar width
+        const progressBar = this.progressBarContainer.querySelector('.toto-report-bar');
+        if (progressBar) {
+            progressBar.style.width = `${report.progress * 100}%`;
+        }
+    }
+
+    public hide(): void {
+        if (this.progressBarContainer) {
+            // Optional: animate the progress bar to 100% before hiding
+            const progressBar = this.progressBarContainer.querySelector('.toto-progress-bar');
+            if (progressBar) {
+                progressBar.style.width = '100%';
+            }
+
+            // Hide after a short delay to show completion
+            setTimeout(() => {
+                if (this.progressBarContainer) {
+                    document.body.removeChild(this.progressBarContainer);
+                    this.progressBarContainer = null;
+                }
+            }, 500);
+        }
+    }
+
+    private buildContainer(): HTMLElement {
+        let container = document.createElement('div');
+        container.className = 'toto-progress-container';
+        container.style.position = 'fixed';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.width = '100%';
+        container.style.height = 'auto';
+        container.style.zIndex = '10000';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+
+        // Create progress bar
+        const progressBar = document.createElement('div');
+        progressBar.className = 'toto-progress-bar';
+        progressBar.style.height = '14px';
+        progressBar.style.width = '0%';
+        progressBar.style.backgroundColor = '#4285f4';
+        progressBar.style.transition = 'width 0.3s ease-in-out';
+
+        // Create message element with white background
+        const messageElement = document.createElement('div');
+        messageElement.className = 'toto-progress-message';
+        messageElement.textContent = 'Loading/downloading ML model. First time this requires a long time...';
+        messageElement.style.fontSize = '12px';
+        messageElement.style.color = '#333';
+        messageElement.style.textAlign = 'center';
+        messageElement.style.padding = '6px 0';
+        messageElement.style.backgroundColor = 'white';
+        messageElement.style.width = '100%';
+        messageElement.style.borderBottom = '1px solid #ccc';
+
+        // Append elements to container
+        container.appendChild(messageElement);
+        container.appendChild(progressBar);
+        return container;
+    }
+}
