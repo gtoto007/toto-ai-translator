@@ -1,6 +1,6 @@
 "use strict";
 
-import { ProgressBarUI } from './ProgressBarUI';
+import {ProgressBarUI} from './ProgressBarUI';
 
 import WebLLM from './WebLLM';
 
@@ -20,23 +20,9 @@ async function init() {
 
     isInitializing = true;
     try {
+        console.log("WebLLM engine initializing, please wait...")
         llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), 'Llama-3.1-8B-Instruct-q4f16_1-MLC');
         progressBar.hide();
-
-        // Run the initial setup when the page is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            // Add buttons to existing paragraphss
-            addButtonsToParagraphs();
-
-            // Set up observer for future changes
-            setupMutationObserver();
-        });
-
-        addButtonsToParagraphs();
-
-        // Set up observer for future changes
-        setupMutationObserver();
-
         console.log('WebLLM engine initialized successfully');
     } catch (error) {
         console.error('Error initializing engine:', error);
@@ -46,26 +32,36 @@ async function init() {
 }
 
 
+function waitingMessage() {
+    const message = document.createElement('span');
+    message.textContent = 'Translating ';
+    message.style.display = 'inline-block';
+    message.style.marginLeft = '5px';
+    message.style.fontStyle = 'italic';
+    message.style.color = '#666';
 
-function addButtonsToParagraphs() {
-    // Get all paragraphs on the page
-    const paragraphs = document.querySelectorAll('p');
+    // Add a simple animation
+    const dots = document.createElement('span');
+    dots.textContent = '';
+    message.appendChild(dots);
 
-    // Loop through each paragraph
-    paragraphs.forEach((paragraph, index) => {
-        addButtonToParagraph(paragraph, index);
-    });
+    // Animate the dots
+    let dotsCount = 0;
+    const dotsInterval = setInterval(() => {
+        dots.textContent = '.'.repeat(dotsCount % 4);
+        dotsCount++;
+    }, 300);
+    return {message: message, dotsInterval};
 }
 
-function addButtonToParagraph(paragraph: HTMLParagraphElement, index: number) {
-    if (paragraph.classList.contains('toto-translator-processed')) {
-        return; // Paragraph already processed, skip
+function addTranslatorButton(element: HTMLElement, index: number) {
+    if (element.querySelector('.button-toto-translator') || element.classList.contains('.toto-translator-container')) {
+        return;
     }
-
 
     // Create a button element
     const button = document.createElement('button');
-    button.textContent = 'Translate';
+    button.textContent = 'AI T';
     button.dataset.paragraphIndex = index.toString();
     button.className = 'button-toto-translator'; // Use the new class instead of inline styles
 
@@ -73,7 +69,7 @@ function addButtonToParagraph(paragraph: HTMLParagraphElement, index: number) {
     // Add click event listener to the button
     button.addEventListener('click', async function () {
         // Get the text of the paragraph
-        const paragraphText = paragraph.textContent;
+        const paragraphText = element.textContent;
 
 
         // Use the engine to translate the text
@@ -83,38 +79,15 @@ function addButtonToParagraph(paragraph: HTMLParagraphElement, index: number) {
                 return;
             }
 
-            // Implement translation logic here
             console.log('Translating text using the engine...');
-            const pTranslation = document.createElement('div');
-            pTranslation.className = 'toto-translator-container';
+            const translatorContainer = document.createElement('div');
+            translatorContainer.className = 'toto-translator-container';
 
-            // Create and show loading indicator
-            const loadingSpinner = document.createElement('span');
-            loadingSpinner.textContent = 'Translating ';
-            loadingSpinner.className = 'toto-loading-spinner';
-            loadingSpinner.style.display = 'inline-block';
-            loadingSpinner.style.marginLeft = '5px';
-            loadingSpinner.style.fontStyle = 'italic';
-            loadingSpinner.style.color = '#666';
+            const {message, dotsInterval} = waitingMessage();
 
-            // Add a simple animation
-            const dots = document.createElement('span');
-            dots.className = 'toto-loading-dots';
-            dots.textContent = '';
-            loadingSpinner.appendChild(dots);
-
-            // Animate the dots
-            let dotsCount = 0;
-            const dotsInterval = setInterval(() => {
-                dots.textContent = '.'.repeat(dotsCount % 4);
-                dotsCount++;
-            }, 300);
-
-            // Log the text to the console
             console.log(`Paragraph ${index + 1} text:`, paragraphText);
-
-            pTranslation.appendChild(loadingSpinner);
-            paragraph.parentNode.insertBefore(pTranslation, paragraph.nextSibling);
+            translatorContainer.appendChild(message);
+            element.parentNode.insertBefore(translatorContainer, element.nextSibling);
 
             const translationPrompt =
                 `You are the best Italian interpreter and transcription corrector. ` +
@@ -131,7 +104,7 @@ function addButtonToParagraph(paragraph: HTMLParagraphElement, index: number) {
 
             await llm.sendMessage(translationPrompt, (translation) => {
                 // Clear the loading spinner and set the translation text
-                pTranslation.textContent = translation;
+                translatorContainer.textContent = translation;
             });
 
             // Clear the interval when translation is complete
@@ -143,60 +116,16 @@ function addButtonToParagraph(paragraph: HTMLParagraphElement, index: number) {
     });
 
     // Insert the button after the paragraph
-    paragraph.appendChild(button);
+    element.appendChild(button);
     // Add hover event listeners to the paragraph
-    paragraph.addEventListener('mouseenter', () => {
+    element.addEventListener('mouseenter', () => {
         button.style.display = 'inline-block'; // Show the button
     });
 
-    paragraph.classList.add('toto-translator-processed');
-
-
-    paragraph.addEventListener('mouseleave', () => {
-        button.style.display = 'none'; // Hide the button again
+    element.addEventListener('mouseleave', () => {
+        button.remove()
     });
 
-}
-
-
-// Set up a MutationObserver to watch for DOM changes
-function setupMutationObserver() {
-    // Create a new observer
-    const observer = new MutationObserver((mutations) => {
-        let shouldAddButtons = false;
-
-        // Check if any mutations added new paragraphs
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                for (const item of mutation.addedNodes) {
-                    if (item.nodeName === 'P') {
-                        shouldAddButtons = true;
-                        break;
-                    } else if (item.nodeType === 1) { // Element node
-                        if ((item as Element).querySelectorAll('p').length > 0) {
-                            shouldAddButtons = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        });
-
-        // If new paragraphs were added, add buttons to all paragraphs
-        if (shouldAddButtons) {
-            addButtonsToParagraphs();
-        }
-    });
-
-    // Start observing the document with the configured parameters
-    observer.observe(document.body, {
-        childList: true,      // Watch for changes in direct children
-        subtree: true,        // Watch for changes in the entire subtree
-        attributes: false,    // Don't watch for changes in attributes
-        characterData: false  // Don't watch for changes in text content
-    });
-
-    return observer;
 }
 
 
@@ -225,7 +154,7 @@ function setupReconnectionHandlers() {
         llm = null;
 
         // Send a message to the background script to notify about the connection loss
-        chrome.runtime.sendMessage({ type: 'webllm-connection-lost', timestamp: Date.now() }, (response) => {
+        chrome.runtime.sendMessage({type: 'webllm-connection-lost', timestamp: Date.now()}, (response) => {
             init();
         });
     });
@@ -236,4 +165,16 @@ init();
 
 // Set up reconnection handlers
 setupReconnectionHandlers();
+
+document.addEventListener("mouseover", (e) => {
+    //check if e.target is text element
+    const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'SPAN', 'ARTICLE', 'SECTION', 'LI','FIGCAPTION'];
+
+    if (e.target && e.target instanceof HTMLElement) {
+        console.log(e.target, e.target.innerText, e.target.children.length);
+    }
+    if (e.target && e.target instanceof HTMLElement && validTextElements.includes(e.target.tagName.toUpperCase()) && e.target.innerText.trim().length > 0) {
+        addTranslatorButton(e.target as HTMLElement, 0);
+    }
+})
 

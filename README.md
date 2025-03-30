@@ -44,7 +44,7 @@ cd toto-translator
 # TODO
 
 - [X] ux: show a progress bar when the AI model is in downloading and/or loading
-- [ ] refactor: instead of add a button for each paragraph, each the button when user click on "app icon" that appear when user hover the mouse on specif div element
+- [X] refactor: instead of add a button for each paragraph, add the button when when user hover the mouse on html element
 - [ ] refactor: reset worker logic
 - [ ] option ui: change language to translate
 - [ ] option ui: change the model language

@@ -4,6 +4,7 @@ export class ProgressBarUI {
     private progressBarContainer: HTMLElement | null = null;
 
     public showProgress(report: InitProgressReport): void {
+        console.log("showProgress", report);
         // Create progress bar container if it doesn't exist
         if (!this.progressBarContainer) {
            this.progressBarContainer = this.buildContainer();
@@ -11,9 +12,11 @@ export class ProgressBarUI {
         }
 
         // Update progress bar width
-        const progressBar = this.progressBarContainer.querySelector('.toto-report-bar');
-        if (progressBar) {
+        const progressBar = this.progressBarContainer.querySelector('.toto-progress-bar');
+        const messageElement = this.progressBarContainer.querySelector('.toto-progress-message');
+        if (progressBar && messageElement) {
             progressBar.style.width = `${report.progress * 100}%`;
+            messageElement.innerHTML='Toto AI Translator: '+report.text.substring(0,100);
         }
     }
 
@@ -52,7 +55,8 @@ export class ProgressBarUI {
         progressBar.className = 'toto-progress-bar';
         progressBar.style.height = '14px';
         progressBar.style.width = '0%';
-        progressBar.style.backgroundColor = '#4285f4';
+        progressBar.style.backgroundColor = '#3b82f6';
+        progressBar.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12)'; // Subtle shadow
         progressBar.style.transition = 'width 0.3s ease-in-out';
 
         // Create message element with white background
@@ -60,12 +64,12 @@ export class ProgressBarUI {
         messageElement.className = 'toto-progress-message';
         messageElement.textContent = 'Loading/downloading ML model. First time this requires a long time...';
         messageElement.style.fontSize = '12px';
-        messageElement.style.color = '#333';
+        messageElement.style.color = '#1a3b5d';
         messageElement.style.textAlign = 'center';
         messageElement.style.padding = '6px 0';
-        messageElement.style.backgroundColor = 'white';
+        messageElement.style.backgroundColor = '#f0f4f8';
         messageElement.style.width = '100%';
-        messageElement.style.borderBottom = '1px solid #ccc';
+        messageElement.style.borderBottom = '1px solid #cbd5e0';
 
         // Append elements to container
         container.appendChild(messageElement);
