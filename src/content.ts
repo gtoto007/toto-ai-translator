@@ -170,11 +170,14 @@ document.addEventListener("mouseover", (e) => {
     //check if e.target is text element
     const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'SPAN', 'ARTICLE', 'SECTION', 'LI','FIGCAPTION'];
 
-    if (e.target && e.target instanceof HTMLElement) {
-        console.log(e.target, e.target.innerText, e.target.children.length);
-    }
-    if (e.target && e.target instanceof HTMLElement && validTextElements.includes(e.target.tagName.toUpperCase()) && e.target.innerText.trim().length > 0) {
+    if (e.target && e.target instanceof HTMLElement && validTextElements.includes(e.target.tagName.toUpperCase()) && hasDirectText(e.target)) {
         addTranslatorButton(e.target as HTMLElement, 0);
     }
 })
+
+function hasDirectText(elem:HTMLElement) {
+    return Array.from(elem.childNodes).some(
+        node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0
+    );
+}
 
