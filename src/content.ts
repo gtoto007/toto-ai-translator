@@ -55,22 +55,18 @@ function waitingMessage() {
 }
 
 function addTranslatorButton(element: HTMLElement, index: number) {
-    if (element.querySelector('.button-toto-translator') || element.classList.contains('.toto-translator-container')) {
-        return;
-    }
 
     // Create a button element
     const button = document.createElement('button');
     button.textContent = 'AI T';
     button.dataset.paragraphIndex = index.toString();
-    button.className = 'button-toto-translator'; // Use the new class instead of inline styles
-
+    button.className = 'button-toto-translator';
+    button.style.display = 'inline-block'; // Always show the button when added
 
     // Add click event listener to the button
     button.addEventListener('click', async function () {
         // Get the text of the paragraph
         const paragraphText = element.textContent;
-
 
         // Use the engine to translate the text
         try {
@@ -90,18 +86,17 @@ function addTranslatorButton(element: HTMLElement, index: number) {
             element.parentNode.insertBefore(translatorContainer, element.nextSibling);
 
             const translationPrompt =
-                `You are the best Italian interpreter and transcription corrector. ` +
-                `Your task is to first correct any transcription errors, missing punctuation, ` +
-                `or unclear phrases in the given text to make it a complete and natural English sentence. ` +
-                `This text may contain words or phrases that were misheard or incorrectly transcribed. ` +
-                `Use context and common sense to reconstruct the intended meaning. ` +
-                `Once the text is correctly reconstructed, translate it into idiomatic and natural Italian. ` +
-                `The context is related to Software Development. ` +
-                `Avoid to translate tecnhical terms such as test, codeception, keys, etc. ` +
-                `Provide only the final translated sentence and nothing else. ` +
-                `Do not add any explanations, thoughts, or comments—just correct and translate. ` +
-                `The sentence is: ${paragraphText}`;
-
+               `You are an expert Italian interpreter and transcription corrector. ` +
+                `Your task is to correct any transcription errors, missing punctuation, ` +
+                `or unclear phrases in the provided text, transforming it into a complete and natural English sentence. ` +
+                `The text may contain misheard or incorrectly transcribed words or phrases. ` +
+                `Use context and common sense to infer the intended meaning. ` +
+                `Once the text is properly reconstructed, translate it into idiomatic and natural Italian. ` +
+                `The context could be related to Software Development. ` +
+                `Do not translate technical terms such as test, Codeception, keys, etc. ` +
+                `Output only the final translated sentence—no explanations, thoughts, or comments. ` +
+                `The paragraph to translate is marked between ### symbols. Do not include the ### symbols in your output. ` +
+                `### ${paragraphText} ###`;
             await llm.sendMessage(translationPrompt, (translation) => {
                 // Clear the loading spinner and set the translation text
                 translatorContainer.textContent = translation;
@@ -117,15 +112,6 @@ function addTranslatorButton(element: HTMLElement, index: number) {
 
     // Insert the button after the paragraph
     element.appendChild(button);
-    // Add hover event listeners to the paragraph
-    element.addEventListener('mouseenter', () => {
-        button.style.display = 'inline-block'; // Show the button
-    });
-
-    element.addEventListener('mouseleave', () => {
-        button.remove()
-    });
-
 }
 
 
@@ -166,13 +152,44 @@ init();
 // Set up reconnection handlers
 setupReconnectionHandlers();
 
-document.addEventListener("mouseover", (e) => {
-    //check if e.target is text element
-    const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'SPAN', 'ARTICLE', 'SECTION', 'LI','FIGCAPTION'];
+// Track the currently active element when key is pressed
 
-    if (e.target && e.target instanceof HTMLElement && validTextElements.includes(e.target.tagName.toUpperCase()) && hasDirectText(e.target)) {
-        addTranslatorButton(e.target as HTMLElement, 0);
+// Define the activation key (Alt key by default)
+const ACTIVATION_KEY = 'Alt';
+
+
+
+// Add keydown event listener to activate translator
+document.addEventListener("keydown", (e) => {
+    if (e.key === ACTIVATION_KEY) {
+        
+        // Get the element under the mouse cursor using stored coordinates
+        const elemUnderCursor = document.elementFromPoint(mouseX, mouseY);
+        
+        // Check if it's a valid text element
+        const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'SPAN', 'ARTICLE', 'SECTION', 'LI', 'FIGCAPTION', 'FONT','I','A'];
+        
+        if (elemUnderCursor && elemUnderCursor instanceof HTMLElement && 
+            validTextElements.includes(elemUnderCursor.tagName.toUpperCase()) && 
+            hasDirectText(elemUnderCursor)) {
+        
+        
+            if (elemUnderCursor.querySelector('.button-toto-translator') || elemUnderCursor.classList.contains('.toto-translator-container')) {
+                return;
+            }
+            addTranslatorButton(elemUnderCursor, 0);
+        }
     }
+});
+
+
+let mouseX = 0;
+let mouseY = 0;
+document.addEventListener("mousemove", (e) => {
+    // Update global mouse position
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+
 })
 
 function hasDirectText(elem:HTMLElement) {
