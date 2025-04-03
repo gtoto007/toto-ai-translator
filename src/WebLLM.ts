@@ -12,18 +12,24 @@ export default class WebLLM {
     public static async createAsync(initProgressCallback: (report: InitProgressReport) => void, model: string = 'Llama-3.1-8B-Instruct-q4f16_1-MLC'): Promise<WebLLM> {
         const instance = new WebLLM();
         await instance.setup(model, initProgressCallback);
-        console.log("WEBLLM INITIALIZED");
         return instance;
     }
 
     private async setup(model: string, initProgressCallback: (report: InitProgressReport) => void): Promise<void> {
-        this.engine = await CreateExtensionServiceWorkerMLCEngine(model, {initProgressCallback: initProgressCallback},);
+        try {
+            this.engine = await CreateExtensionServiceWorkerMLCEngine(model, {initProgressCallback: initProgressCallback},);
+        } catch (error) {
+            console.log("WEBLLM ERROR", error);
+            this.sendWebLLMConnectionLostEvent();
+            throw error;
+        }
+
     }
 
     public async sendMessage(message: string, onResponseUpdate: (accumulatedResponse: string) => void) {
         try {
-            console.log("sending message:",message);
-            const options:ChatCompletionRequestStreaming={
+            console.log("sending message:", message);
+            const options: ChatCompletionRequestStreaming = {
                 stream: true,
                 messages: [{role: "user", content: message}],
                 response_format: {type: 'text'},
@@ -66,8 +72,7 @@ export default class WebLLM {
                 onResponseUpdate('Connection to the translation service was lost. Please try again.');
 
                 // Dispatch a custom event that content.ts can listen for
-                const reconnectEvent = new CustomEvent('webllm-connection-lost');
-                window.dispatchEvent(reconnectEvent);
+                this.sendWebLLMConnectionLostEvent();
             } else {
                 // For other errors, just pass the message to the caller
                 onResponseUpdate('An error occurred during translation. Please try again.');
@@ -76,4 +81,7 @@ export default class WebLLM {
     }
 
 
+    private sendWebLLMConnectionLostEvent() {
+        window.dispatchEvent(new CustomEvent('webllm-connection-lost'));
+    }
 }
