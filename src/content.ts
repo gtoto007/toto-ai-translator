@@ -26,6 +26,7 @@ async function init() {
         console.log('WebLLM engine initialized successfully');
     } catch (error) {
         console.log('Error initializing engine:', error);
+        resetWorker();
     } finally {
         isInitializing = false;
     }
@@ -95,7 +96,7 @@ function addTranslatorButton(element: HTMLElement, index: number) {
                 `The context could be related to Software Development. ` +
                 `Do not translate technical terms such as test, Codeception, keys, etc. ` +
                 `Output only the final translated sentence—no explanations, thoughts, or comments. ` +
-                `The paragraph to translate is marked between ### symbols. Do not include the ### symbols in your output. ` +
+                `The paragraph to translate is marked between ### symbols. Do not include the ### symbols in your output. Translate all content ` +
                 `### ${paragraphText} ###`;
             await llm.sendMessage(translationPrompt, (translation) => {
                 // Clear the loading spinner and set the translation text
@@ -107,6 +108,7 @@ function addTranslatorButton(element: HTMLElement, index: number) {
 
         } catch (error) {
             console.error('Error during translation:', error);
+            resetWorker()
         }
     });
 
@@ -136,11 +138,9 @@ function setupReconnectionHandlers() {
     // Listen for custom connection lost events from WebLLM
     window.addEventListener('webllm-connection-lost', () => {
         console.log('WebLLM connection lost event received, attempting to reconnect...');
-        // Set llm to null to force a complete reinitialization
-        llm = null;
-
         // Send a message to the background script to notify about the connection loss
         chrome.runtime.sendMessage({type: 'webllm-connection-lost', timestamp: Date.now()}, (response) => {
+            console.log('Initilization again after connection lost event received:',response)
             init();
         });
     });
@@ -196,5 +196,14 @@ function hasDirectText(elem:HTMLElement) {
     return Array.from(elem.childNodes).some(
         node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0
     );
+}
+
+function resetWorker(){
+    llm=undefined;
+    console.log('resetting worker');
+    chrome.runtime.sendMessage({type: 'webllm-connection-lost', timestamp: Date.now()}, (response) => {
+        console.log('Initilization again after connection lost event received:',response)
+        init();
+    });
 }
 

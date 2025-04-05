@@ -20,7 +20,6 @@ export default class WebLLM {
             this.engine = await CreateExtensionServiceWorkerMLCEngine(model, {initProgressCallback: initProgressCallback},);
         } catch (error) {
             console.log("WEBLLM ERROR", error);
-            this.sendWebLLMConnectionLostEvent();
             throw error;
         }
 
@@ -39,7 +38,7 @@ export default class WebLLM {
             const timeoutPromise = new Promise<any>((_, reject) => {
                 setTimeout(() => {
                     reject(new Error('Translation request timed out after 10 seconds'));
-                }, 3000);
+                }, 10000);
             });
 
             // Race between the actual request and the timeout
@@ -59,28 +58,13 @@ export default class WebLLM {
             }
         } catch (error) {
             console.error('Error in sendMessage:', error);
-
-            // Check if the error is related to a closed message port or timeout
             const errorMessage = error instanceof Error ? error.message : String(error);
-            if (errorMessage.includes('port closed') ||
-                errorMessage.includes('disconnected') ||
-                errorMessage.includes('connection') ||
-                errorMessage.includes('timed out') ||
-                errorMessage.includes('terminated')) {
-
-                // Notify the caller about the connection issue
-                onResponseUpdate('Connection to the translation service was lost. Please try again.');
-
-                // Dispatch a custom event that content.ts can listen for
-                this.sendWebLLMConnectionLostEvent();
-            } else {
-                // For other errors, just pass the message to the caller
-                onResponseUpdate('An error occurred during translation. Please try again.');
-            }
+            onResponseUpdate(errorMessage+ '. Please try again.');
+            throw error;
         }
     }
 
-
+    //
     private sendWebLLMConnectionLostEvent() {
         window.dispatchEvent(new CustomEvent('webllm-connection-lost'));
     }
