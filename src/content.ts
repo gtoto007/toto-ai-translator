@@ -7,10 +7,11 @@ import WebLLM from './WebLLM';
 // Create a progress bar element
 const progressBar = new ProgressBarUI();
 
-
+const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'ARTICLE', 'SECTION', 'LI', 'FIGCAPTION', 'FONT','I','A'];
 // Initialize the engine
 let llm: WebLLM;
 let isInitializing = false;
+
 
 async function init() {
     if (isInitializing) {
@@ -167,21 +168,35 @@ document.addEventListener("keydown", (e) => {
         // Get the element under the mouse cursor using stored coordinates
         const elemUnderCursor = document.elementFromPoint(mouseX, mouseY);
 
-        // Check if it's a valid text element
-        const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'SPAN', 'ARTICLE', 'SECTION', 'LI', 'FIGCAPTION', 'FONT','I','A'];
-
-        if (elemUnderCursor && elemUnderCursor instanceof HTMLElement &&
-            validTextElements.includes(elemUnderCursor.tagName.toUpperCase()) &&
-            hasDirectText(elemUnderCursor)) {
-
-
-            if (elemUnderCursor.querySelector('.button-toto-translator') || elemUnderCursor.classList.contains('.toto-translator-container')) {
-                return;
-            }
-            addTranslatorButton(elemUnderCursor, 0);
+        if(!(elemUnderCursor instanceof HTMLElement) || !hasDirectText(elemUnderCursor)){
+            return;
         }
+
+        const elem = retrieveElement(elemUnderCursor)
+
+        if(!elem){
+            return
+        }
+
+        addTranslatorButton(elem, 0);
     }
 });
+
+function retrieveElement(elem:HTMLElement){
+
+    if (elem.querySelector('.button-toto-translator') || elem.classList.contains('.toto-translator-container')) {
+        return;
+    }
+
+    if(validTextElements.includes(elem.tagName.toUpperCase())){
+        return elem;
+    }
+
+    if(!elem.parentElement)
+        return;
+
+    return retrieveElement(elem.parentElement)
+}
 
 
 let mouseX = 0;
