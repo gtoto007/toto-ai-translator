@@ -19,7 +19,7 @@ chrome.runtime.onConnect.addListener(function (port) {
  setup(port);
 });
 
-function setup(port,resetWorker=true) {
+function setup(port,resetWorker=false) {
   globalPort = port
   console.log("Connected to port:", port);
   if (handler === undefined || resetWorker) {

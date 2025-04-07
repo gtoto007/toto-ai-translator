@@ -19,6 +19,7 @@ async function init() {
     }
 
     isInitializing = true;
+    let port = chrome.runtime.connect({ name: "popup-connection" });
     try {
         console.log("WebLLM engine initializing, please wait...")
         llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), 'Llama-3.1-8B-Instruct-q4f16_1-MLC');
@@ -201,9 +202,16 @@ function hasDirectText(elem:HTMLElement) {
 function resetWorker(){
     llm=undefined;
     console.log('resetting worker');
-    chrome.runtime.sendMessage({type: 'webllm-connection-lost', timestamp: Date.now()}, (response) => {
+    try {
+
+        chrome.runtime.sendMessage({type: 'webllm-connection-lost', timestamp: Date.now()}, (response) => {
         console.log('Initilization again after connection lost event received:',response)
         init();
     });
+    } catch (e) {
+        console.error('Exception while sending message:', e);
+        // Handle the exception
+    }
+
 }
 
