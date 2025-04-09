@@ -2,7 +2,7 @@ import {
     CreateExtensionServiceWorkerMLCEngine,
     MLCEngineInterface,
     InitProgressReport,
-    ChatCompletionRequestStreaming
+    ChatCompletionRequestStreaming,
 } from "@mlc-ai/web-llm";
 
 export default class WebLLM {

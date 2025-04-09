@@ -1,0 +1,199 @@
+<!-- settings.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Translator Settings</title>
+  <style>
+    body {
+      width: 400px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 5px;
+    }
+    button {
+      padding: 8px 15px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #status {
+      color: green;
+      margin-top: 10px;
+    }
+    .dropdown {
+      position: relative;
+      width: 100%;
+    }
+
+    .dropdown-display {
+      width: 100%;
+      padding: 8px 12px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: white;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .dropdown-display:after {
+      content: '▼';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: #666;
+    }
+
+    .dropdown-panel {
+      display: none;
+      position: absolute;
+      width: 100%;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-top: 2px;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .dropdown-search {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 6px 8px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .dropdown-options {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .dropdown-option {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .dropdown-option:hover, .dropdown-option.highlighted {
+      background-color: #f1f1f1;
+    }
+
+    .dropdown.active .dropdown-panel {
+      display: block;
+    }
+
+    .no-results {
+      padding: 8px 12px;
+      color: #666;
+      font-style: italic;
+    }
+
+    .model-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .model-name {
+      font-weight: bold;
+    }
+
+    .model-ram {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+  </style>
+</head>
+<body>
+<h2>Toto AI Translator Settings</h2>
+
+<div class="form-group" id="modelFormGroup">
+  <label for="modelName">Model:</label>
+  <div class="dropdown">
+    <div class="dropdown-display" id="modelNameDisplay">Select a model</div>
+    <div class="dropdown-panel" id="modelNamePanel">
+      <div class="dropdown-search">
+        <input type="text" class="search-box" id="modelNameSearch" placeholder="Search model...">
+      </div>
+      <div class="dropdown-options" id="modelNameOptions">
+        <!-- Options will be populated by JavaScript -->
+      </div>
+    </div>
+    <input type="hidden" id="modelName">
+  </div>
+</div>
+
+
+<div class="form-group" id="sourceLanguageFormGroup">
+  <label for="sourceLanguage">Source Language:</label>
+  <div class="dropdown">
+    <div class="dropdown-display" id="sourceLanguageDisplay">Select a language</div>
+    <div class="dropdown-panel" id="sourceLanguagePanel">
+      <div class="dropdown-search">
+        <input type="text" class="search-box" id="sourceLanguageSearch" placeholder="Search language...">
+      </div>
+      <div class="dropdown-options" id="sourceLanguageOptions">
+        <!-- Options will be populated by JavaScript -->
+      </div>
+    </div>
+    <input type="hidden" id="sourceLanguage">
+  </div>
+</div>
+
+<div class="form-group" id="targetLanguageFormGroup">
+  <label for="targetLanguage">Target Language:</label>
+  <div class="dropdown">
+    <div class="dropdown-display" id="targetLanguageDisplay">Select a language</div>
+    <div class="dropdown-panel" id="targetLanguagePanel">
+      <div class="dropdown-search">
+        <input type="text" class="search-box" id="targetLanguageSearch" placeholder="Search language...">
+      </div>
+      <div class="dropdown-options" id="targetLanguageOptions">
+        <!-- Options will be populated by JavaScript -->
+      </div>
+    </div>
+    <input type="hidden" id="targetLanguage">
+  </div>
+</div>
+<button id="saveSettings">Save Settings</button>
+<div id="status"></div>
+
+<!--
+<div id="debug" style="color: red; margin-top: 10px;">Loading settings...</div>
+
+<script>
+  document.getElementById('debug').textContent = 'Script tag executed';
+
+  // This will help you see if there are module loading errors
+  window.addEventListener('error', function(e) {
+    document.getElementById('debug').textContent = 'Error: ' + e.message;
+  });
+</script>
+-->
+
+
+<script type="module" src="./settings.ts"></script>
+</body>
+</html>

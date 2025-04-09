@@ -3,6 +3,8 @@
 import {ProgressBarUI} from './ProgressBarUI';
 
 import WebLLM from './WebLLM';
+import {Config, getConfig} from './config';
+
 
 // Create a progress bar element
 const progressBar = new ProgressBarUI();
@@ -11,6 +13,8 @@ const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'ARTI
 // Initialize the engine
 let llm: WebLLM;
 let isInitializing = false;
+
+let config:Config;
 
 
 async function init() {
@@ -22,8 +26,10 @@ async function init() {
     isInitializing = true;
     let port = chrome.runtime.connect({ name: "popup-connection" });
     try {
-        console.log("WebLLM engine initializing, please wait...")
-        llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), 'Llama-3.1-8B-Instruct-q4f16_1-MLC');
+
+        config = await getConfig();
+        console.log("WebLLM engine initializing with model ",config.modelName," please wait...")
+        llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), config.modelName);
         progressBar.hide();
         console.log('WebLLM engine initialized successfully');
     } catch (error) {
@@ -69,7 +75,11 @@ function addTranslatorButton(element: HTMLElement, index: number) {
     // Add click event listener to the button
     button.addEventListener('click', async function () {
         // Get the text of the paragraph
-        const paragraphText = element.textContent;
+        if(!element.textContent)
+            return;
+
+        // @ts-ignore
+        const paragraphText = (element.textContent).replace(button.textContent, '');
 
         // Use the engine to translate the text
         try {
@@ -87,19 +97,28 @@ function addTranslatorButton(element: HTMLElement, index: number) {
             console.log(`Paragraph ${index + 1} text:`, paragraphText);
             translatorContainer.appendChild(message);
             element.parentNode.insertBefore(translatorContainer, element.nextSibling);
-
             const translationPrompt =
-               `You are an expert Italian interpreter and transcription corrector. ` +
-                `Your task is to correct any transcription errors, missing punctuation, ` +
-                `or unclear phrases in the provided text, transforming it into a complete and natural English sentence. ` +
-                `The text may contain misheard or incorrectly transcribed words or phrases. ` +
-                `Use context and common sense to infer the intended meaning. ` +
-                `Once the text is properly reconstructed, translate it into idiomatic and natural Italian. ` +
-                `The context could be related to Software Development. ` +
-                `Do not translate technical terms such as test, Codeception, keys, etc. ` +
-                `Output only the final translated sentence—no explanations, thoughts, or comments. ` +
-                `The paragraph to translate is marked between ### symbols. Do not include the ### symbols in your output. Translate all content ` +
-                `### ${paragraphText} ###`;
+                `**Role:** Expert ${config.targetLanguage} Translator & Corrector for ${config.sourceLanguage} text.
+                **Input:** A potentially flawed ${config.sourceLanguage} text segment. It might have transcription errors, missing punctuation, or unclear parts.
+                **Output Rule**: Reply only with the  ${config.targetLanguage} translation. Do not include introductions, explanations, or any ${config.sourceLanguage}. Do not write anything else.
+
+                **Task:**
+                1.  **Interpret & Correct:** Understand the provided ${config.sourceLanguage} text (${paragraphText}). Mentally correct errors (typos, misheard words, grammar, punctuation) to determine the most likely intended complete sentence(s). Use the software development context.
+                2.  **Translate:** Translate the *corrected and understood* ${config.sourceLanguage} meaning into fluent, natural-sounding ${config.targetLanguage}. Ensure the *entire* intended message is fully translated.
+                3. **Preserve Terms:** Do not translate specific technical terms
+                
+                **Output Instructions:**
+                *   Provide *only* the final ${config.targetLanguage} translation.
+                *   The output must be the complete translation, covering the full meaning of the interpreted source text.
+                *   Do not include the original text, the corrected source text, or any explanations.
+                
+                Example:
+                Text to Process: Sometimes ChatGPT generate text that seem fluent, but doesn’t actually make sense.
+                Expected Output: A volte ChatGPT genera testi che sembrano fluidi, ma in realtà non hanno senso.
+                
+                **Text to Process:**
+                ${paragraphText}`
+
             await llm.sendMessage(translationPrompt, (translation) => {
                 // Clear the loading spinner and set the translation text
                 translatorContainer.textContent = translation;

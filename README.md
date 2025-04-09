@@ -52,7 +52,7 @@ Note: The extension uses a local machine learning model that runs directly in yo
 - [X] ux: show a progress bar when the AI model is in downloading and/or loading
 - [X] refactor: instead of add a button for each paragraph, add the button when when user hover the mouse on html element
 - [X] change activation behaviour: when user key down a specific key, the extension will be activated
-- [ ] refactor: reset worker logic
-- [ ] option ui: change language to translate
-- [ ] option ui: change the model language
+- [X] refactor: reset worker logic
+- [X] option ui: change source and target language to translate
+- [X] option ui: change the model language
 - [ ] option ui: custom the prompt ********

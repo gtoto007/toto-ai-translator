@@ -1,5 +1,5 @@
 {
-    "name": "Toto Translator",
+    "name": "Toto AI Translator",
     "description": "Use AI Local Assistent to translate some sentences into the page",
     "version": "1.0",
     "manifest_version": 3,
@@ -13,7 +13,7 @@
         "storage"
     ],
     "content_security_policy": {
-        "extension_pages": "style-src-elem 'self' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; script-src 'self' 'wasm-unsafe-eval'; default-src 'self' data:; connect-src 'self' data: ws://localhost:* http://localhost:8000 https://huggingface.co https://cdn-lfs.huggingface.co https://cdn-lfs-us-1.huggingface.co https://raw.githubusercontent.com https://cdn-lfs-us-1.hf.co"
+        "extension_pages": "style-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; script-src 'self' 'wasm-unsafe-eval'; default-src 'self' data:; connect-src 'self' data: ws://localhost:* http://localhost:8000 https://huggingface.co https://cdn-lfs.huggingface.co https://cdn-lfs-us-1.huggingface.co https://raw.githubusercontent.com https://cdn-lfs-us-1.hf.co"
     },
     "content_scripts": [
         {
@@ -23,6 +23,8 @@
         }
     ],
     "action": {
-        "default_title": "Toto Translator"
+        "default_title": "Toto AI Translator",
+        "default_popup": "settings.html"
+
     }
 }
