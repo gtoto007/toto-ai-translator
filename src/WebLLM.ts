@@ -9,15 +9,18 @@ export default class WebLLM {
 
     private engine!: MLCEngineInterface;
 
+    public modelName!: string;
+
     public static async createAsync(initProgressCallback: (report: InitProgressReport) => void, model: string = 'Llama-3.1-8B-Instruct-q4f16_1-MLC'): Promise<WebLLM> {
         const instance = new WebLLM();
         await instance.setup(model, initProgressCallback);
         return instance;
     }
 
-    private async setup(model: string, initProgressCallback: (report: InitProgressReport) => void): Promise<void> {
+    private async setup(modelName: string, initProgressCallback: (report: InitProgressReport) => void): Promise<void> {
         try {
-            this.engine = await CreateExtensionServiceWorkerMLCEngine(model, {initProgressCallback: initProgressCallback},);
+            this.modelName =modelName;
+            this.engine = await CreateExtensionServiceWorkerMLCEngine(modelName, {initProgressCallback: initProgressCallback},);
         } catch (error) {
             console.log("WEBLLM ERROR", error);
             throw error;
@@ -57,9 +60,6 @@ export default class WebLLM {
                 onResponseUpdate(accumulatedResponse);
             }
         } catch (error) {
-            console.error('Error in sendMessage:', error);
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            onResponseUpdate(errorMessage+ '. Please try again.');
             throw error;
         }
     }

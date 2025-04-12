@@ -83,22 +83,23 @@ function addTranslatorButton(element: HTMLElement, index: number) {
         // @ts-ignore
         const paragraphText = (element.textContent).replace(button.textContent, '');
 
+        if (!llm) {
+            console.log('Engine not initialized yet, please wait...');
+            return;
+        }
+        const translatorContainer = document.createElement('div');
+        translatorContainer.className = 'toto-translator-container';
+        const {message, dotsInterval} = waitingMessage();
+        translatorContainer.appendChild(message);
+        element.parentNode.insertBefore(translatorContainer, element.nextSibling);
         // Use the engine to translate the text
         try {
-            if (!llm) {
-                console.log('Engine not initialized yet, please wait...');
-                return;
-            }
             let config = await getConfig();
-            const translatorContainer = document.createElement('div');
-            translatorContainer.className = 'toto-translator-container';
 
-            const {message, dotsInterval} = waitingMessage();
+            if(llm.modelName != config.modelName){
+                throw new Error('Model changed, please wait that the model is loaded and try again.');
+            }
 
-
-            translatorContainer.appendChild(message);
-
-            element.parentNode.insertBefore(translatorContainer, element.nextSibling);
             const translationPrompt =
                 `**Role:** Expert ${config.targetLanguage} Translator & Corrector for ${config.sourceLanguage} text.
                 **Input:** A potentially flawed ${config.sourceLanguage} text segment. It might have transcription errors, missing punctuation, or unclear parts.
@@ -128,6 +129,7 @@ function addTranslatorButton(element: HTMLElement, index: number) {
 
         } catch (error) {
             console.error('Error during translation:', error);
+            translatorContainer.textContent = error instanceof Error ? error.message : String(error);
             resetWorker()
         }
     });
@@ -243,7 +245,6 @@ function resetWorker(){
     });
     } catch (e) {
         console.error('Exception while sending message:', e);
-        // Handle the exception
     }
 
 }
