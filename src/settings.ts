@@ -4,47 +4,47 @@ import {prebuiltAppConfig} from "@mlc-ai/web-llm";
 
 
 const languages = [
-    {id: "English", label: "English"},
-    {id: "Chinese", label: "Chinese"},
-    {id: "Spanish", label: "Spanish"},
-    {id: "Arabic", label: "Arabic"},
-    {id: "Hindi", label: "Hindi"},
-    {id: "Bengali", label: "Bengali"},
-    {id: "Portuguese", label: "Portuguese"},
-    {id: "Russian", label: "Russian"},
-    {id: "Japanese", label: "Japanese"},
-    {id: "German", label: "German"},
-    {id: "French", label: "French"},
-    {id: "Italian", label: "Italian"},
-    {id: "Dutch", label: "Dutch"},
-    {id: "Korean", label: "Korean"},
-    {id: "Turkish", label: "Turkish"},
-    {id: "Vietnamese", label: "Vietnamese"},
-    {id: "Polish", label: "Polish"},
-    {id: "Ukrainian", label: "Ukrainian"},
-    {id: "Persian", label: "Persian"},
-    {id: "Indonesian", label: "Indonesian"},
-    {id: "Malay", label: "Malay"},
-    {id: "Thai", label: "Thai"},
-    {id: "Swedish", label: "Swedish"},
-    {id: "Norwegian", label: "Norwegian"},
-    {id: "Danish", label: "Danish"},
-    {id: "Finnish", label: "Finnish"},
-    {id: "Greek", label: "Greek"},
-    {id: "Czech", label: "Czech"},
-    {id: "Romanian", label: "Romanian"},
-    {id: "Hungarian", label: "Hungarian"},
-    {id: "Hebrew", label: "Hebrew"},
-    {id: "Bulgarian", label: "Bulgarian"},
-    {id: "Slovak", label: "Slovak"},
-    {id: "Croatian", label: "Croatian"},
-    {id: "Serbian", label: "Serbian"},
-    {id: "Urdu", label: "Urdu"},
-    {id: "Swahili", label: "Swahili"},
-    {id: "Tamil", label: "Tamil"},
-    {id: "Telugu", label: "Telugu"},
-    {id: "Marathi", label: "Marathi"},
-    {id: "Kannada", label: "Kannada"}
+    {value: "English", label: "English"},
+    {value: "Chinese", label: "Chinese"},
+    {value: "Spanish", label: "Spanish"},
+    {value: "Arabic", label: "Arabic"},
+    {value: "Hindi", label: "Hindi"},
+    {value: "Bengali", label: "Bengali"},
+    {value: "Portuguese", label: "Portuguese"},
+    {value: "Russian", label: "Russian"},
+    {value: "Japanese", label: "Japanese"},
+    {value: "German", label: "German"},
+    {value: "French", label: "French"},
+    {value: "Italian", label: "Italian"},
+    {value: "Dutch", label: "Dutch"},
+    {value: "Korean", label: "Korean"},
+    {value: "Turkish", label: "Turkish"},
+    {value: "Vietnamese", label: "Vietnamese"},
+    {value: "Polish", label: "Polish"},
+    {value: "Ukrainian", label: "Ukrainian"},
+    {value: "Persian", label: "Persian"},
+    {value: "Indonesian", label: "Indonesian"},
+    {value: "Malay", label: "Malay"},
+    {value: "Thai", label: "Thai"},
+    {value: "Swedish", label: "Swedish"},
+    {value: "Norwegian", label: "Norwegian"},
+    {value: "Danish", label: "Danish"},
+    {value: "Finnish", label: "Finnish"},
+    {value: "Greek", label: "Greek"},
+    {value: "Czech", label: "Czech"},
+    {value: "Romanian", label: "Romanian"},
+    {value: "Hungarian", label: "Hungarian"},
+    {value: "Hebrew", label: "Hebrew"},
+    {value: "Bulgarian", label: "Bulgarian"},
+    {value: "Slovak", label: "Slovak"},
+    {value: "Croatian", label: "Croatian"},
+    {value: "Serbian", label: "Serbian"},
+    {value: "Urdu", label: "Urdu"},
+    {value: "Swahili", label: "Swahili"},
+    {value: "Tamil", label: "Tamil"},
+    {value: "Telugu", label: "Telugu"},
+    {value: "Marathi", label: "Marathi"},
+    {value: "Kannada", label: "Kannada"}
 ];
 
 
@@ -59,7 +59,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize model dropdown
     console.log(prebuiltAppConfig.model_list)
-    const modelOptions = prebuiltAppConfig.model_list.map(model => {
+    // @ts-ignore
+    const modelOptions = prebuiltAppConfig.model_list.sort((a,b)=>b.vram_required_MB-a.vram_required_MB).map(model => {
         // Format RAM size
         let ramSize: string;
         if (model.vram_required_MB >= 1024) {
@@ -70,13 +71,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         return {
             value: model.model_id,
-            // If your dropdown supports HTML content:
             label: `<div class="model-option">
                   <span class="model-name">${model.model_id}</span>
                   <span class="model-ram">${ramSize} RAM</span>
                 </div>`
-            // If HTML is not supported:
-            // label: `${model.model_id} (${ramSize})`
         };
     });
 
@@ -85,13 +83,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Save button handler
     const saveButton = document.getElementById('saveSettings');
     saveButton?.addEventListener('click', async () => {
-        const newConfig: Partial<Config> = {
+        updateConfig({
             sourceLanguage: (document.getElementById('sourceLanguage') as HTMLInputElement).value,
             targetLanguage: (document.getElementById('targetLanguage') as HTMLInputElement).value,
             modelName: (document.getElementById('modelName') as HTMLInputElement).value
-        };
-
-        updateConfig(newConfig);
+        });
         // Show confirmation message
         const status = document.getElementById('status');
         if (status) {

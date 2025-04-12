@@ -11,11 +11,12 @@ const progressBar = new ProgressBarUI();
 
 const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'ARTICLE', 'SECTION', 'LI', 'FIGCAPTION', 'FONT','I','A'];
 // Initialize the engine
-let llm: WebLLM;
+let llm: WebLLM | undefined;
 let isInitializing = false;
 
-let config:Config;
 
+
+let listenerModelChange;
 
 async function init() {
     if (isInitializing) {
@@ -24,10 +25,11 @@ async function init() {
     }
 
     isInitializing = true;
+    //a workaround to be ensure the worker is enabled.
     let port = chrome.runtime.connect({ name: "popup-connection" });
     try {
 
-        config = await getConfig();
+        let config = await getConfig();
         console.log("WebLLM engine initializing with model ",config.modelName," please wait...")
         llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), config.modelName);
         progressBar.hide();
@@ -75,7 +77,7 @@ function addTranslatorButton(element: HTMLElement, index: number) {
     // Add click event listener to the button
     button.addEventListener('click', async function () {
         // Get the text of the paragraph
-        if(!element.textContent)
+        if(!element.textContent || !element.parentNode)
             return;
 
         // @ts-ignore
@@ -87,15 +89,15 @@ function addTranslatorButton(element: HTMLElement, index: number) {
                 console.log('Engine not initialized yet, please wait...');
                 return;
             }
-
-            console.log('Translating text using the engine...');
+            let config = await getConfig();
             const translatorContainer = document.createElement('div');
             translatorContainer.className = 'toto-translator-container';
 
             const {message, dotsInterval} = waitingMessage();
 
-            console.log(`Paragraph ${index + 1} text:`, paragraphText);
+
             translatorContainer.appendChild(message);
+
             element.parentNode.insertBefore(translatorContainer, element.nextSibling);
             const translationPrompt =
                 `**Role:** Expert ${config.targetLanguage} Translator & Corrector for ${config.sourceLanguage} text.
@@ -112,9 +114,6 @@ function addTranslatorButton(element: HTMLElement, index: number) {
                 *   The output must be the complete translation, covering the full meaning of the interpreted source text.
                 *   Do not include the original text, the corrected source text, or any explanations.
                 
-                Example:
-                Text to Process: Sometimes ChatGPT generate text that seem fluent, but doesn’t actually make sense.
-                Expected Output: A volte ChatGPT genera testi che sembrano fluidi, ma in realtà non hanno senso.
                 
                 **Text to Process:**
                 ${paragraphText}`
@@ -229,7 +228,7 @@ document.addEventListener("mousemove", (e) => {
 
 function hasDirectText(elem:HTMLElement) {
     return Array.from(elem.childNodes).some(
-        node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0
+        node => node.nodeType === Node.TEXT_NODE && node.textContent != null && node.textContent.trim().length > 0
     );
 }
 
