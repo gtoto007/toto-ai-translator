@@ -1,6 +1,6 @@
 // settings.ts
 import {getConfig, updateConfig, Config} from './config';
-import {prebuiltAppConfig} from "@mlc-ai/web-llm";
+import {ModelRecord, prebuiltAppConfig} from "@mlc-ai/web-llm";
 
 
 const languages = [
@@ -48,37 +48,40 @@ const languages = [
 ];
 
 
+function createModelOption(model: ModelRecord) {
+    // Format RAM size
+    let ramSize: string;
+    if(!model.vram_required_MB){
+        ramSize = "Unknown";
+    }else if (model.vram_required_MB >= 1024) {
+        ramSize = `${(model.vram_required_MB / 1024).toFixed(1)}GB`;
+    } else {
+        ramSize = `${model.vram_required_MB.toLocaleString()}MB`;
+    }
+    return {
+        value: model.model_id,
+        label: `<div class="model-option">
+                  <span class="model-name">${model.model_id}</span>
+                  <span class="model-ram">${ramSize} RAM</span>
+                </div>`
+    };
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOMContentLoaded settings.ts");
     console.log(prebuiltAppConfig.model_list)
     const config = await getConfig();
 
     // Initialize language dropdowns
-    initializeLanguageDropdown('sourceLanguage', languages, config.sourceLanguage);
-    initializeLanguageDropdown('targetLanguage', languages, config.targetLanguage);
+    initializeDropdown('sourceLanguage', languages, config.sourceLanguage);
+    initializeDropdown('targetLanguage', languages, config.targetLanguage);
 
-    // Initialize model dropdown
-    console.log(prebuiltAppConfig.model_list)
-    // @ts-ignore
-    const modelOptions = prebuiltAppConfig.model_list.sort((a,b)=>b.vram_required_MB-a.vram_required_MB).map(model => {
-        // Format RAM size
-        let ramSize: string;
-        if (model.vram_required_MB >= 1024) {
-            ramSize = `${(model.vram_required_MB / 1024).toFixed(1)}GB`;
-        } else {
-            ramSize = `${model.vram_required_MB.toLocaleString()}MB`;
-        }
+    const modelOptions = prebuiltAppConfig.model_list
+        // @ts-ignore
+        .sort((a,b)=>b.vram_required_MB-a.vram_required_MB)
+        .map(model => createModelOption(model));
 
-        return {
-            value: model.model_id,
-            label: `<div class="model-option">
-                  <span class="model-name">${model.model_id}</span>
-                  <span class="model-ram">${ramSize} RAM</span>
-                </div>`
-        };
-    });
-
-    initializeLanguageDropdown('modelName', modelOptions, config.modelName);
+    initializeDropdown('modelName', modelOptions, config.modelName);
 
     // Save button handler
     const saveButton = document.getElementById('saveSettings');
@@ -97,18 +100,45 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 2000);
         }
     });
+
+    //Reset button handler
+    // Add this to your existing DOMContentLoaded event listener in settings.ts
+    const resetButton = document.getElementById('resetSettings');
+    resetButton?.addEventListener('click', async () => {
+        // Import the default config and update UI
+        const { defaultConfig } = await import('./config');
+
+        // Update the UI dropdowns with default values
+        setDropdownValue('sourceLanguage', defaultConfig.sourceLanguage);
+        setDropdownValue('targetLanguage', defaultConfig.targetLanguage);
+        setDropdownValue('modelName', defaultConfig.modelName);
+
+        // Save the default config
+        updateConfig({...defaultConfig});
+
+        // Show confirmation message
+        const status = document.getElementById('status');
+        if (status) {
+            status.textContent = 'Settings reset to default!';
+            setTimeout(() => {
+                status.textContent = '';
+            }, 2000);
+        }
+    });
+
+
 });
 
-function initializeLanguageDropdown(id: string, options: { value: string; label: string }[], initialValue: string): void {
+function initializeDropdown(id: string, options: { value: string; label: string }[], initialValue: string): void {
     const hiddenInput = document.getElementById(id) as HTMLInputElement;
     const displayElement = document.getElementById(`${id}Display`) as HTMLElement;
     const searchInput = document.getElementById(`${id}Search`) as HTMLInputElement;
     const optionsContainer = document.getElementById(`${id}Options`) as HTMLElement;
     const dropdownContainer = displayElement.closest('.dropdown') as HTMLElement;
 
-    // Set initial value
-    hiddenInput.value = initialValue || '';
-    displayElement.textContent = initialValue || 'Select a language';
+    let initialOption = options.find(option => option.value === initialValue);
+    hiddenInput.value = initialOption && initialOption.value || '';
+    displayElement.innerHTML = initialOption && initialOption.label || 'Select a item';
 
     // Initialize dropdown options
     populateOptions(options, optionsContainer, id);
@@ -186,7 +216,7 @@ function populateOptions(options: { value: string; label: string }[], container:
     if (options.length === 0) {
         const noResults = document.createElement('div');
         noResults.className = 'no-results';
-        noResults.textContent = 'No matching languages found';
+        noResults.textContent = 'No matching found';
         container.appendChild(noResults);
         return;
     }
@@ -226,7 +256,7 @@ function selectOption(option: { value: string; label: string }, inputId: string,
     const displayElement = document.getElementById(`${inputId}Display`) as HTMLElement;
 
     hiddenInput.value = option.value;
-    displayElement.textContent = option.label;
+    displayElement.innerHTML = option.label;
     dropdownContainer.classList.remove('active');
 }
 
@@ -238,5 +268,30 @@ function ensureVisible(element: HTMLElement, container: HTMLElement): void {
         container.scrollTop += elementRect.bottom - containerRect.bottom;
     } else if (elementRect.top < containerRect.top) {
         container.scrollTop -= containerRect.top - elementRect.top;
+    }
+}
+
+function setDropdownValue(id: string, value: string): void {
+    // Set the hidden input value
+    const input = document.getElementById(id) as HTMLInputElement;
+    if (input) input.value = value;
+
+    // Update the display text
+    const display = document.getElementById(`${id}Display`);
+    if (display) {
+        // Find the option with matching value to get its label
+        const options = id === 'modelName'
+            ? prebuiltAppConfig.model_list.map(model => createModelOption(model))
+            : languages;
+
+        const option = options.find(opt => opt.value === value);
+        if (option) {
+            // For model we need to handle HTML differently
+            if (id === 'modelName') {
+                display.innerHTML = option.label;
+            } else {
+                display.textContent = option.label;
+            }
+        }
     }
 }

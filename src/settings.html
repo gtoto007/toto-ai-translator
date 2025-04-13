@@ -50,13 +50,14 @@
     }
 
     .dropdown-display:after {
-      content: '▼';
+      content: '';
       position: absolute;
       right: 12px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 12px;
-      color: #666;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid #666;
     }
 
     .dropdown-panel {
@@ -115,13 +116,16 @@
       width: 100%;
     }
 
-    .model-name {
-      font-weight: bold;
-    }
-
     .model-ram {
       color: #666;
       font-size: 0.9em;
+      margin-right: 14px;
+    }
+    .flex {
+      display: flex;
+    }
+    .justify-between {
+      justify-content: space-between;
     }
 
   </style>
@@ -177,21 +181,11 @@
     <input type="hidden" id="targetLanguage">
   </div>
 </div>
-<button id="saveSettings">Save Settings</button>
+<div class="flex justify-between">
+  <button id="saveSettings">Save Settings</button>
+  <button id="resetSettings">Reset to Default</button>
+</div>
 <div id="status"></div>
-
-<!--
-<div id="debug" style="color: red; margin-top: 10px;">Loading settings...</div>
-
-<script>
-  document.getElementById('debug').textContent = 'Script tag executed';
-
-  // This will help you see if there are module loading errors
-  window.addEventListener('error', function(e) {
-    document.getElementById('debug').textContent = 'Error: ' + e.message;
-  });
-</script>
--->
 
 
 <script type="module" src="./settings.ts"></script>

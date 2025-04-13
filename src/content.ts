@@ -33,7 +33,6 @@ async function init() {
         console.log("WebLLM engine initializing with model ",config.modelName," please wait...")
         llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), config.modelName);
         progressBar.hide();
-        console.log('WebLLM engine initialized successfully');
     } catch (error) {
         console.log('Error initializing engine:', error);
         resetWorker();

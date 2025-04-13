@@ -4,12 +4,14 @@ export class ProgressBarUI {
     private progressBarContainer: HTMLElement | null = null;
 
     public showProgress(report: InitProgressReport): void {
-        console.log("showProgress", report);
         // Create progress bar container if it doesn't exist
-        if (!this.progressBarContainer) {
+        if (report.progress < 1 && !this.progressBarContainer ) {
            this.progressBarContainer = this.buildContainer();
            document.body.appendChild(this.progressBarContainer);
         }
+
+        if(!this.progressBarContainer)
+            return;
 
         // Update progress bar width
         const progressBar = this.progressBarContainer.querySelector('.toto-progress-bar');

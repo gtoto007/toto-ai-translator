@@ -16,9 +16,7 @@ export const defaultConfig: Config = {
 export async function getConfig(): Promise<Config> {
     return await new Promise((resolve) => {
         chrome.storage.sync.get('config', (result) => {
-            console.log(result);
             if (result.config) {
-                console.log("config",{...defaultConfig, ...result.config})
                 resolve({...defaultConfig, ...result.config});
             } else {
                 resolve({...defaultConfig})
