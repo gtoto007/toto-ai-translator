@@ -68,7 +68,7 @@ function addTranslatorButton(element: HTMLElement, index: number) {
 
     // Create a button element
     const button = document.createElement('button');
-    button.textContent = 'AI T';
+    button.textContent = 'AI Translate';
     button.dataset.paragraphIndex = index.toString();
     button.className = 'button-toto-translator';
     button.style.display = 'inline-block'; // Always show the button when added
@@ -81,18 +81,18 @@ function addTranslatorButton(element: HTMLElement, index: number) {
 
         // @ts-ignore
         const paragraphText = (element.textContent).replace(button.textContent, '');
-
-        if (!llm) {
-            console.log('Engine not initialized yet, please wait...');
-            return;
-        }
         const translatorContainer = document.createElement('div');
         translatorContainer.className = 'toto-translator-container';
         const {message, dotsInterval} = waitingMessage();
         translatorContainer.appendChild(message);
         element.parentNode.insertBefore(translatorContainer, element.nextSibling);
+
         // Use the engine to translate the text
         try {
+            if (!llm) {
+                throw new Error('Engine not initialized yet, please wait and try again.');
+            }
+
             let config = await getConfig();
 
             if(llm.modelName != config.modelName){
@@ -129,7 +129,8 @@ function addTranslatorButton(element: HTMLElement, index: number) {
         } catch (error) {
             console.error('Error during translation:', error);
             translatorContainer.textContent = error instanceof Error ? error.message : String(error);
-            resetWorker()
+            if(llm)
+              resetWorker()
         }
     });
 

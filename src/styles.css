@@ -11,39 +11,33 @@
 }
 
 .button-toto-translator {
-  background-color: #FFFFFF;
+  background-color: #4285f4; /* Google blue color */
   border: 0;
-  position:absolute;
+  position: relative; /* Changed from absolute to prevent layout issues */
   border-radius: .5rem;
   box-sizing: border-box;
-  color: #111827;
+  color: white; /* Changed to white for better contrast */
   font-weight: 600;
-  padding: .10rem .25rem;
-  font-size:1em;
+  padding: .35rem .75rem; /* Increased padding for better clickability */
+  font-size: 0.85em;
   text-align: center;
-  text-decoration: none #D1D5DB solid;
-  text-decoration-thickness: auto;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  text-decoration: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Enhanced shadow */
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
-  display: inline-block;
+  display: inline-flex; /* Changed to inline-flex */
+  align-items: center; /* Center content vertically */
   margin-left: 10px;
+  transition: all 0.2s ease; /* Smooth transition for hover effects */
 }
 
 .button-toto-translator:hover {
-  background-color: rgb(249,250,251);
+  background-color: #3367d6; /* Darker blue on hover */
 }
 
-.button-toto-translator:focus {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-}
 
-.button-toto-translator:focus-visible {
-  box-shadow: none;
-}
 
 .toto-progress-container {
   position: fixed;
