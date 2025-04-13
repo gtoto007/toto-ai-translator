@@ -64,43 +64,32 @@ function waitingMessage() {
     return {message: message, dotsInterval};
 }
 
-function addTranslatorButton(element: HTMLElement, index: number) {
+async function translateContent(element: HTMLElement) {
+    if (!element.textContent || !element.parentNode)
+        return;
 
-    // Create a button element
-    const button = document.createElement('button');
-    button.textContent = 'AI Translate';
-    button.dataset.paragraphIndex = index.toString();
-    button.className = 'button-toto-translator';
-    button.style.display = 'inline-block'; // Always show the button when added
+    // @ts-ignore
+    const paragraphText =element.textContent
+    const translatorContainer = document.createElement('div');
+    translatorContainer.className = 'toto-translator-container';
+    const {message, dotsInterval} = waitingMessage();
+    translatorContainer.appendChild(message);
+    element.parentNode.insertBefore(translatorContainer, element.nextSibling);
 
-    // Add click event listener to the button
-    button.addEventListener('click', async function () {
-        // Get the text of the paragraph
-        if(!element.textContent || !element.parentNode)
-            return;
+    // Use the engine to translate the text
+    try {
+        if (!llm) {
+            throw new Error('Engine not initialized yet, please wait and try again.');
+        }
 
-        // @ts-ignore
-        const paragraphText = (element.textContent).replace(button.textContent, '');
-        const translatorContainer = document.createElement('div');
-        translatorContainer.className = 'toto-translator-container';
-        const {message, dotsInterval} = waitingMessage();
-        translatorContainer.appendChild(message);
-        element.parentNode.insertBefore(translatorContainer, element.nextSibling);
+        let config = await getConfig();
 
-        // Use the engine to translate the text
-        try {
-            if (!llm) {
-                throw new Error('Engine not initialized yet, please wait and try again.');
-            }
+        if (llm.modelName != config.modelName) {
+            throw new Error('Model changed, please wait that the model is loaded and try again.');
+        }
 
-            let config = await getConfig();
-
-            if(llm.modelName != config.modelName){
-                throw new Error('Model changed, please wait that the model is loaded and try again.');
-            }
-
-            const translationPrompt =
-                `**Role:** Expert ${config.targetLanguage} Translator & Corrector for ${config.sourceLanguage} text.
+        const translationPrompt =
+            `**Role:** Expert ${config.targetLanguage} Translator & Corrector for ${config.sourceLanguage} text.
                 **Input:** A potentially flawed ${config.sourceLanguage} text segment. It might have transcription errors, missing punctuation, or unclear parts.
                 **Output Rule**: Reply only with the  ${config.targetLanguage} translation. Do not include introductions, explanations, or any ${config.sourceLanguage}. Do not write anything else.
 
@@ -118,20 +107,35 @@ function addTranslatorButton(element: HTMLElement, index: number) {
                 **Text to Process:**
                 ${paragraphText}`
 
-            await llm.sendMessage(translationPrompt, (translation) => {
-                // Clear the loading spinner and set the translation text
-                translatorContainer.textContent = translation;
-            });
+        await llm.sendMessage(translationPrompt, (translation) => {
+            // Clear the loading spinner and set the translation text
+            translatorContainer.textContent = translation;
+        });
 
-            // Clear the interval when translation is complete
-            clearInterval(dotsInterval);
+        // Clear the interval when translation is complete
+        clearInterval(dotsInterval);
 
-        } catch (error) {
-            console.error('Error during translation:', error);
-            translatorContainer.textContent = error instanceof Error ? error.message : String(error);
-            if(llm)
-              resetWorker()
-        }
+    } catch (error) {
+        console.error('Error during translation:', error);
+        translatorContainer.textContent = error instanceof Error ? error.message : String(error);
+        if (llm)
+            resetWorker()
+    }
+}
+
+function addTranslatorButton(element: HTMLElement, index: number) {
+
+    // Create a button element
+    const button = document.createElement('button');
+    button.textContent = 'AI Translate';
+    button.dataset.paragraphIndex = index.toString();
+    button.className = 'button-toto-translator';
+    button.style.display = 'inline-block'; // Always show the button when added
+
+    // Add click event listener to the button
+    button.addEventListener('click', async function () {
+        // Get the text of the paragraph
+        await translateContent(element);
     });
 
     // Insert the button after the paragraph
@@ -174,35 +178,31 @@ init();
 // Set up reconnection handlers
 setupReconnectionHandlers();
 
-// Track the currently active element when key is pressed
-
-// Define the activation key (Alt key by default)
-const ACTIVATION_KEY = 'Alt';
-
-
-
-// Add keydown event listener to activate translator
-document.addEventListener("keydown", (e) => {
-    if (e.key === ACTIVATION_KEY) {
-
-        // Get the element under the mouse cursor using stored coordinates
-        const elemUnderCursor = document.elementFromPoint(mouseX, mouseY);
+document.addEventListener("click", (e) => {
+    // Check if Alt key is pressed during click
+    if (e.altKey) {
+        // Get the element that was clicked directly from the event
+        const elemUnderCursor = e.target;
 
         if(!(elemUnderCursor instanceof HTMLElement) || !hasDirectText(elemUnderCursor)){
             return;
         }
 
-        const elem = retrieveElement(elemUnderCursor)
+        const elem = retrieveElementToTranslate(elemUnderCursor);
 
         if(!elem){
-            return
+            return;
         }
+        
+        translateContent(elem);
 
-        addTranslatorButton(elem, 0);
+        // Prevent default click behavior
+        e.preventDefault();
     }
 });
 
-function retrieveElement(elem:HTMLElement){
+
+function retrieveElementToTranslate(elem:HTMLElement){
 
     if (elem.querySelector('.button-toto-translator') || elem.classList.contains('.toto-translator-container')) {
         return;
@@ -215,7 +215,7 @@ function retrieveElement(elem:HTMLElement){
     if(!elem.parentElement)
         return;
 
-    return retrieveElement(elem.parentElement)
+    return retrieveElementToTranslate(elem.parentElement)
 }
 
 
