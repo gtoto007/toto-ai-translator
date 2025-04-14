@@ -23,7 +23,6 @@ function getBrowserLanguage(): string {
     } catch (e) {
         console.warn('Could not access chrome.i18n API:', e);
     }
-    console.log(langCode);
 
     // Fallback to navigator.language if chrome.i18n is unavailable
     if (!langCode && navigator) {
@@ -32,10 +31,8 @@ function getBrowserLanguage(): string {
 
     langCode = langCode.split('-')[0];
 
-
     // Map language codes to full language names
     const languageMap: {[key: string]: string} = {
-        // Major languages by number of speakers
         'en': 'English',
         'zh': 'Chinese',
         'es': 'Spanish',
@@ -79,7 +76,6 @@ function getBrowserLanguage(): string {
         'kn': 'Kannada'
     };
 
-    // Return the full language name if available, or default to English
     return languageMap[langCode] || 'English';
 }
 
