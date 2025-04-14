@@ -193,7 +193,7 @@ document.addEventListener("click", (e) => {
         if(!elem){
             return;
         }
-        
+
         translateContent(elem);
 
         // Prevent default click behavior
@@ -234,7 +234,10 @@ function hasDirectText(elem:HTMLElement) {
     );
 }
 
-function resetWorker(){
+async function  resetWorker(){
+    if(llm){
+        await llm.unload();
+    }
     llm=undefined;
     console.log('resetting worker');
     try {

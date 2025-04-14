@@ -28,6 +28,10 @@ export default class WebLLM {
 
     }
 
+    public async unload(){
+        await this.engine.unload().catch(console.log);
+    }
+
     public async sendMessage(message: string, onResponseUpdate: (accumulatedResponse: string) => void) {
         try {
             console.log("sending message:", message);
@@ -40,8 +44,8 @@ export default class WebLLM {
             // Create a timeout promise that rejects after 10 seconds
             const timeoutPromise = new Promise<any>((_, reject) => {
                 setTimeout(() => {
-                    reject(new Error('Translation request timed out after 10 seconds'));
-                }, 10000);
+                    reject(new Error('Translation request timed out after 10 seconds. Retry again'));
+                }, 30000);
             });
 
             // Race between the actual request and the timeout
