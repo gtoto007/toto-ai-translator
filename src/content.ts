@@ -126,26 +126,6 @@ async function translateContent(element: HTMLElement) {
     }
 }
 
-function addTranslatorButton(element: HTMLElement, index: number) {
-
-    // Create a button element
-    const button = document.createElement('button');
-    button.textContent = 'AI Translate';
-    button.dataset.paragraphIndex = index.toString();
-    button.className = 'button-toto-translator';
-    button.style.display = 'inline-block'; // Always show the button when added
-
-    // Add click event listener to the button
-    button.addEventListener('click', async function () {
-        // Get the text of the paragraph
-        await translateContent(element);
-    });
-
-    // Insert the button after the paragraph
-    element.appendChild(button);
-}
-
-
 // Handle reconnection when page comes back from bfcache (back/forward cache)
 function setupReconnectionHandlers() {
     // Listen for pageshow events with persisted=true (page restored from bfcache)
@@ -164,15 +144,6 @@ function setupReconnectionHandlers() {
         }
     });
 
-    // Listen for custom connection lost events from WebLLM
-    window.addEventListener('webllm-connection-lost', () => {
-        console.log('WebLLM connection lost event received, attempting to reconnect...');
-        // Send a message to the background script to notify about the connection loss
-        chrome.runtime.sendMessage({type: 'webllm-connection-lost', timestamp: Date.now()}, (response) => {
-            console.log('Initilization again after connection lost event received:',response)
-            init();
-        });
-    });
 }
 
 // Initialize the engine

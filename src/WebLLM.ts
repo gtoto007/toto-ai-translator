@@ -67,9 +67,4 @@ export default class WebLLM {
             throw error;
         }
     }
-
-    //
-    private sendWebLLMConnectionLostEvent() {
-        window.dispatchEvent(new CustomEvent('webllm-connection-lost'));
-    }
 }
