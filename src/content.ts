@@ -74,7 +74,7 @@ document.addEventListener("click", (e) => {
 function hasDirectText(elem:HTMLElement) {
     console.log(elem);
     return Array.from(elem.childNodes).some(
-        node => node.nodeType === Node.TEXT_NODE && node.textContent != null && node.textContent.trim().length > 0
+        node => node.textContent != null && node.textContent.trim().length > 0
     );
 }
 
