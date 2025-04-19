@@ -16,6 +16,9 @@ let isInitializing = false;
 
 let InitRetryCounter=0;
 
+// Initialize the engine
+init();
+
 async function init() {
     if (isInitializing) {
         console.log('Engine initialization already in progress');
@@ -45,26 +48,34 @@ async function init() {
 }
 
 
-function waitingMessage() {
-    const message = document.createElement('span');
-    message.textContent = 'Translating ';
-    message.style.display = 'inline-block';
-    message.style.marginLeft = '5px';
-    message.style.fontStyle = 'italic';
-    message.style.color = '#666';
+document.addEventListener("click", (e) => {
+    // Check if Alt key is pressed during click
+    if (e.altKey) {
+        // Get the element that was clicked directly from the event
+        const elemUnderCursor = e.target;
 
-    // Add a simple animation
-    const dots = document.createElement('span');
-    dots.textContent = '';
-    message.appendChild(dots);
+        if(!(elemUnderCursor instanceof HTMLElement) || !hasDirectText(elemUnderCursor)){
+            return;
+        }
 
-    // Animate the dots
-    let dotsCount = 0;
-    const dotsInterval = setInterval(() => {
-        dots.textContent = '.'.repeat(dotsCount % 4);
-        dotsCount++;
-    }, 300);
-    return {message: message, dotsInterval};
+        const elem = retrieveElementToTranslate(elemUnderCursor);
+
+        if(!elem){
+            return;
+        }
+
+        translateContent(elem);
+
+        // Prevent default click behavior
+        e.preventDefault();
+    }
+});
+
+function hasDirectText(elem:HTMLElement) {
+    console.log(elem);
+    return Array.from(elem.childNodes).some(
+        node => node.nodeType === Node.TEXT_NODE && node.textContent != null && node.textContent.trim().length > 0
+    );
 }
 
 async function translateContent(element: HTMLElement) {
@@ -126,6 +137,30 @@ async function translateContent(element: HTMLElement) {
     }
 }
 
+
+
+function waitingMessage() {
+    const message = document.createElement('span');
+    message.textContent = 'Translating ';
+    message.style.display = 'inline-block';
+    message.style.marginLeft = '5px';
+    message.style.fontStyle = 'italic';
+    message.style.color = '#666';
+
+    // Add a simple animation
+    const dots = document.createElement('span');
+    dots.textContent = '';
+    message.appendChild(dots);
+
+    // Animate the dots
+    let dotsCount = 0;
+    const dotsInterval = setInterval(() => {
+        dots.textContent = '.'.repeat(dotsCount % 4);
+        dotsCount++;
+    }, 300);
+    return {message: message, dotsInterval};
+}
+
 // Handle reconnection when page comes back from bfcache (back/forward cache)
 function setupReconnectionHandlers() {
     // Listen for pageshow events with persisted=true (page restored from bfcache)
@@ -146,34 +181,12 @@ function setupReconnectionHandlers() {
 
 }
 
-// Initialize the engine
-init();
+
 
 // Set up reconnection handlers
 setupReconnectionHandlers();
 
-document.addEventListener("click", (e) => {
-    // Check if Alt key is pressed during click
-    if (e.altKey) {
-        // Get the element that was clicked directly from the event
-        const elemUnderCursor = e.target;
 
-        if(!(elemUnderCursor instanceof HTMLElement) || !hasDirectText(elemUnderCursor)){
-            return;
-        }
-
-        const elem = retrieveElementToTranslate(elemUnderCursor);
-
-        if(!elem){
-            return;
-        }
-
-        translateContent(elem);
-
-        // Prevent default click behavior
-        e.preventDefault();
-    }
-});
 
 
 function retrieveElementToTranslate(elem:HTMLElement){
@@ -202,11 +215,7 @@ document.addEventListener("mousemove", (e) => {
 
 })
 
-function hasDirectText(elem:HTMLElement) {
-    return Array.from(elem.childNodes).some(
-        node => node.nodeType === Node.TEXT_NODE && node.textContent != null && node.textContent.trim().length > 0
-    );
-}
+
 
 async function  resetWorker(){
     console.log('resetting worker');
