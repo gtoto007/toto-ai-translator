@@ -14,26 +14,29 @@ const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'ARTI
 let llm: WebLLM | undefined;
 let isInitializing = false;
 
-
-
-let listenerModelChange;
+let InitRetryCounter=0;
 
 async function init() {
     if (isInitializing) {
         console.log('Engine initialization already in progress');
         return;
     }
-
     isInitializing = true;
+
+    if(InitRetryCounter>3){
+        console.log('Too many retry init. Please try to reload your browser.');
+        return;
+    }
     //a workaround to be ensure the worker is enabled.
     let port = chrome.runtime.connect({ name: "popup-connection" });
     try {
-
         let config = await getConfig();
         console.log("WebLLM engine initializing with model ",config.modelName," please wait...")
         llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), config.modelName);
         progressBar.hide();
+        InitRetryCounter=0;
     } catch (error) {
+        InitRetryCounter++;
         console.log('Error initializing engine:', error);
         resetWorker();
     } finally {
@@ -235,17 +238,17 @@ function hasDirectText(elem:HTMLElement) {
 }
 
 async function  resetWorker(){
+    console.log('resetting worker');
     if(llm){
         await llm.unload();
+        llm=undefined;
     }
-    llm=undefined;
-    console.log('resetting worker');
-    try {
 
+    try {
         chrome.runtime.sendMessage({type: 'webllm-connection-lost', timestamp: Date.now()}, (response) => {
-        console.log('Initilization again after connection lost event received:',response)
-        init();
-    });
+            console.log('Initilization again after connection lost event received:', response)
+            init();
+        });
     } catch (e) {
         console.error('Exception while sending message:', e);
     }
