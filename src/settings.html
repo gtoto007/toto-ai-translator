@@ -9,6 +9,12 @@
       padding: 10px;
       font-family: Arial, sans-serif;
     }
+
+    input[type="checkbox" i] {
+      width: 1rem;
+      height: 1rem;
+    }
+
     .form-group {
       margin-bottom: 15px;
     }
@@ -133,6 +139,12 @@
 <body>
 <h2>Toto AI Translator Settings</h2>
 
+<!-- Enable the extension -->
+<div class="form-group">
+  <label for="enablePageTranslation">Enable Page Translation:</label>
+  <input type="checkbox" id="enablePageTranslation">
+</div>
+<!-- Choose a model -->
 <div class="form-group" id="modelFormGroup">
   <label for="modelName">Model:</label>
   <div class="dropdown">
@@ -148,8 +160,7 @@
     <input type="hidden" id="modelName">
   </div>
 </div>
-
-
+<!-- Choose the source language -->
 <div class="form-group" id="sourceLanguageFormGroup">
   <label for="sourceLanguage">Source Language:</label>
   <div class="dropdown">
@@ -165,7 +176,7 @@
     <input type="hidden" id="sourceLanguage">
   </div>
 </div>
-
+<!-- Choose the target language -->
 <div class="form-group" id="targetLanguageFormGroup">
   <label for="targetLanguage">Target Language:</label>
   <div class="dropdown">
@@ -181,6 +192,7 @@
     <input type="hidden" id="targetLanguage">
   </div>
 </div>
+<!-- Button Actions -->
 <div class="flex justify-between">
   <button id="saveSettings">Save Settings</button>
   <button id="resetSettings">Reset to Default</button>

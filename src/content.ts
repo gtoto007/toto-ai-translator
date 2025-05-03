@@ -3,7 +3,7 @@
 import {ProgressBarUI} from './ProgressBarUI';
 
 import WebLLM from './WebLLM';
-import {Config, getConfig} from './config';
+import {getConfig} from './config';
 
 
 // Create a progress bar element
@@ -30,12 +30,16 @@ async function init() {
         console.log('Too many retry init. Please try to reload your browser.');
         return;
     }
+    let config = await getConfig();
+    if(!config.enablePageTranslation){
+        return
+    }
     //a workaround to be ensure the worker is enabled.
     let port = chrome.runtime.connect({ name: "popup-connection" });
     try {
-        let config = await getConfig();
         console.log("WebLLM engine initializing with model ",config.modelName," please wait...")
         llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), config.modelName);
+        addExtensionDisabledListener();
         progressBar.hide();
         InitRetryCounter=0;
     } catch (error) {
@@ -72,7 +76,6 @@ document.addEventListener("click", (e) => {
 });
 
 function hasDirectText(elem:HTMLElement) {
-    console.log(elem);
     return Array.from(elem.childNodes).some(
         node => node.textContent != null && node.textContent.trim().length > 0
     );
@@ -189,6 +192,27 @@ setupReconnectionHandlers();
 
 
 
+
+function addExtensionDisabledListener(){
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.type === 'extensionDisabled') {
+            // Clean up resources when the extension is disabled
+            if (llm) {
+                llm.unload().then(() => {
+                    llm = undefined;
+                    console.log('WebLLM engine unloaded due to extension being disabled');
+                }).catch(err => {
+                    console.error('Error unloading WebLLM:', err);
+                });
+            }
+
+        }
+
+        // Return true if you want to use sendResponse asynchronously
+        return true;
+    });
+
+}
 function retrieveElementToTranslate(elem:HTMLElement){
 
     if (elem.querySelector('.button-toto-translator') || elem.classList.contains('.toto-translator-container')) {
@@ -204,17 +228,6 @@ function retrieveElementToTranslate(elem:HTMLElement){
 
     return retrieveElementToTranslate(elem.parentElement)
 }
-
-
-let mouseX = 0;
-let mouseY = 0;
-document.addEventListener("mousemove", (e) => {
-    // Update global mouse position
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-
-})
-
 
 
 async function  resetWorker(){

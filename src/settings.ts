@@ -67,12 +67,12 @@ function createModelOption(model: ModelRecord) {
     };
 }
 
+
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log("DOMContentLoaded settings.ts");
-    console.log(prebuiltAppConfig.model_list)
     const config = await getConfig();
 
     // Initialize language dropdowns
+    setCheckboxValue('enablePageTranslation', config.enablePageTranslation);
     initializeDropdown('sourceLanguage', languages, config.sourceLanguage);
     initializeDropdown('targetLanguage', languages, config.targetLanguage);
 
@@ -86,7 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Save button handler
     const saveButton = document.getElementById('saveSettings');
     saveButton?.addEventListener('click', async () => {
-        updateConfig({
+        let config = updateConfig({
+            enablePageTranslation: (document.getElementById('enablePageTranslation') as HTMLInputElement).checked,
             sourceLanguage: (document.getElementById('sourceLanguage') as HTMLInputElement).value,
             targetLanguage: (document.getElementById('targetLanguage') as HTMLInputElement).value,
             modelName: (document.getElementById('modelName') as HTMLInputElement).value
@@ -99,16 +100,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                 status.textContent = '';
             }, 2000);
         }
+
+        if (!config.enablePageTranslation) {
+            // Send message to all active tabs
+            chrome.tabs.query({}, (tabs) => {
+                tabs.forEach(tab => {
+                    if (tab.id) {
+                        chrome.tabs.sendMessage(tab.id, { type: 'extensionDisabled' });
+                    }
+                });
+            });
+        }
+
     });
 
     //Reset button handler
-    // Add this to your existing DOMContentLoaded event listener in settings.ts
     const resetButton = document.getElementById('resetSettings');
     resetButton?.addEventListener('click', async () => {
         // Import the default config and update UI
         const { defaultConfig } = await import('./config');
 
         // Update the UI dropdowns with default values
+        setCheckboxValue('enablePageTranslation', defaultConfig.enablePageTranslation);
         setDropdownValue('sourceLanguage', defaultConfig.sourceLanguage);
         setDropdownValue('targetLanguage', defaultConfig.targetLanguage);
         setDropdownValue('modelName', defaultConfig.modelName);
@@ -128,6 +141,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 });
+
+function setCheckboxValue(id: string,checked: boolean) {
+    const input = document.getElementById(id) as HTMLInputElement;
+    input.checked = checked;
+}
 
 function initializeDropdown(id: string, options: { value: string; label: string }[], initialValue: string): void {
     const hiddenInput = document.getElementById(id) as HTMLInputElement;

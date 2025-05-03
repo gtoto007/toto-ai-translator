@@ -1,5 +1,6 @@
 // Configuration interface for the translator
 export interface Config {
+    enablePageTranslation: boolean;
     sourceLanguage: string;
     targetLanguage: string;
     modelName: string;
@@ -7,6 +8,7 @@ export interface Config {
 
 // Default configuration
 export const defaultConfig: Config = {
+    enablePageTranslation: true,
     sourceLanguage: 'English',
     targetLanguage: getBrowserLanguage() =='English' ? 'Italian' : getBrowserLanguage(),
     modelName: 'Llama-3.1-8B-Instruct-q4f16_1-MLC'
@@ -99,5 +101,6 @@ export async function getConfig(): Promise<Config> {
  */
 export function updateConfig(newConfig: Config) {
     chrome.storage.sync.set({config: {...newConfig}});
+    return newConfig;
 }
 

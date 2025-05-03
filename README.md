@@ -1,4 +1,4 @@
-# Toto AI Translator
+# Toto AI Translator - Browser Extension
 
 Toto AI Translator runs advanced language models directly in your browser, eliminating the need for external translation services. By leveraging WebGPU acceleration, WebAssembly, and web workers, it delivers efficient local translations while maintaining complete privacy.
 
