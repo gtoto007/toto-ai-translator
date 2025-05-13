@@ -41,11 +41,11 @@ export default class WebLLM {
                 response_format: {type: 'text'},
             }
 
-            // Create a timeout promise that rejects after 10 seconds
+            // Create a timeout promise that rejects after 15 seconds
             const timeoutPromise = new Promise<any>((_, reject) => {
                 setTimeout(() => {
-                    reject(new Error('Translation request timed out after 10 seconds. Retry again'));
-                }, 30000);
+                    reject(new Error('Translation request timed out after 15 seconds. Retry again'));
+                }, 15000);
             });
 
             // Race between the actual request and the timeout

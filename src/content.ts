@@ -9,15 +9,13 @@ import {getConfig} from './config';
 // Create a progress bar element
 const progressBar = new ProgressBarUI();
 
-const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'ARTICLE', 'SECTION', 'LI', 'FIGCAPTION', 'FONT','I','A'];
+const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'ARTICLE', 'SECTION', 'LI', 'FIGCAPTION', 'FONT', 'I', 'A'];
 // Initialize the engine
 let llm: WebLLM | undefined;
 let isInitializing = false;
 
-let InitRetryCounter=0;
+let InitRetryCounter = 0;
 
-// Initialize the engine
-init();
 
 async function init() {
     if (isInitializing) {
@@ -26,22 +24,23 @@ async function init() {
     }
     isInitializing = true;
 
-    if(InitRetryCounter>3){
+    if (InitRetryCounter > 3) {
         console.log('Too many retry init. Please try to reload your browser.');
-        return;
+        return false;
     }
-    let config = await getConfig();
-    if(!config.enablePageTranslation){
-        return
-    }
-    //a workaround to be ensure the worker is enabled.
-    let port = chrome.runtime.connect({ name: "popup-connection" });
     try {
-        console.log("WebLLM engine initializing with model ",config.modelName," please wait...")
+        //a workaround to be ensure the worker is enabled.
+        let port = chrome.runtime.connect({name: "popup-connection"});
+        let config = await getConfig();
+        if (!config.enablePageTranslation) {
+            return false
+        }
+        console.log("WebLLM engine initializing with model ", config.modelName, " please wait...")
         llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), config.modelName);
         addExtensionDisabledListener();
         progressBar.hide();
-        InitRetryCounter=0;
+        InitRetryCounter = 0;
+        return true;
     } catch (error) {
         InitRetryCounter++;
         console.log('Error initializing engine:', error);
@@ -52,19 +51,19 @@ async function init() {
 }
 
 
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
     // Check if Alt key is pressed during click
     if (e.altKey) {
         // Get the element that was clicked directly from the event
         const elemUnderCursor = e.target;
 
-        if(!(elemUnderCursor instanceof HTMLElement) || !hasDirectText(elemUnderCursor)){
+        if (!(elemUnderCursor instanceof HTMLElement) || !hasDirectText(elemUnderCursor)) {
             return;
         }
 
         const elem = retrieveElementToTranslate(elemUnderCursor);
 
-        if(!elem){
+        if (!elem) {
             return;
         }
 
@@ -75,7 +74,7 @@ document.addEventListener("click", (e) => {
     }
 });
 
-function hasDirectText(elem:HTMLElement) {
+function hasDirectText(elem: HTMLElement) {
     return Array.from(elem.childNodes).some(
         node => node.textContent != null && node.textContent.trim().length > 0
     );
@@ -86,7 +85,7 @@ async function translateContent(element: HTMLElement) {
         return;
 
     // @ts-ignore
-    const paragraphText =element.textContent
+    const paragraphText = element.textContent
     const translatorContainer = document.createElement('div');
     translatorContainer.className = 'toto-translator-container';
     const {message, dotsInterval} = waitingMessage();
@@ -96,7 +95,9 @@ async function translateContent(element: HTMLElement) {
     // Use the engine to translate the text
     try {
         if (!llm) {
-            throw new Error('Engine not initialized yet, please wait and try again.');
+            if(!await init() || !llm) {
+                throw new Error('Engine not initialized yet, please wait and try again.');
+            }
         }
 
         let config = await getConfig();
@@ -139,7 +140,6 @@ async function translateContent(element: HTMLElement) {
             resetWorker()
     }
 }
-
 
 
 function waitingMessage() {
@@ -185,15 +185,10 @@ function setupReconnectionHandlers() {
 }
 
 
-
 // Set up reconnection handlers
 setupReconnectionHandlers();
 
-
-
-
-
-function addExtensionDisabledListener(){
+function addExtensionDisabledListener() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.type === 'extensionDisabled') {
             // Clean up resources when the extension is disabled
@@ -205,7 +200,6 @@ function addExtensionDisabledListener(){
                     console.error('Error unloading WebLLM:', err);
                 });
             }
-
         }
 
         // Return true if you want to use sendResponse asynchronously
@@ -213,30 +207,26 @@ function addExtensionDisabledListener(){
     });
 
 }
-function retrieveElementToTranslate(elem:HTMLElement){
+
+function retrieveElementToTranslate(elem: HTMLElement) {
 
     if (elem.querySelector('.button-toto-translator') || elem.classList.contains('.toto-translator-container')) {
         return;
     }
 
-    if(validTextElements.includes(elem.tagName.toUpperCase())){
+    if (validTextElements.includes(elem.tagName.toUpperCase())) {
         return elem;
     }
 
-    if(!elem.parentElement)
+    if (!elem.parentElement)
         return;
 
     return retrieveElementToTranslate(elem.parentElement)
 }
 
 
-async function  resetWorker(){
+async function resetWorker() {
     console.log('resetting worker');
-    if(llm){
-        await llm.unload();
-        llm=undefined;
-    }
-
     try {
         chrome.runtime.sendMessage({type: 'webllm-connection-lost', timestamp: Date.now()}, (response) => {
             console.log('Initilization again after connection lost event received:', response)
