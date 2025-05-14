@@ -1,11 +1,11 @@
 # Toto AI Translator - Browser Extension  
 
-Toto AI Translator runs advanced language models directly in your browser, eliminating the need for external translation services. By leveraging WebGPU acceleration, WebAssembly, and web workers, it delivers efficient local translations while maintaining complete privacy.
+Toto AI Translator translates text on any webpage in any language by running a local LLM directly in your browser, maintaining complete privacy without relying on any external services.
 
 
 ![demo.gif](images/demo.gif)
 ## Purpose
-The purpose of this extension is to demonstrate the possibility of running machine learning models locally in an efficient way directly in your browser.
+The purpose of this extension is to demonstrate the possibility of running LLMs locally in an efficient way directly in your browser.
 By leveraging graphics acceleration, WebAssembly, and web workers, Toto Translator provides translation capabilities without requiring external services or specific server setups like Ollama.
 
 
@@ -14,6 +14,7 @@ By leveraging graphics acceleration, WebAssembly, and web workers, Toto Translat
 - ✅ **Translation**: Translate text directly on any webpage in any language by using local LLM
 - ✅ **Privacy-First**: All processing happens locally on your device
 - ✅ **Simple Interface**: Just Alt (or Option)+Click on any text to translate
+- 
 
 # User Guide
 
