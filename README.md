@@ -25,8 +25,8 @@ By leveraging graphics acceleration, WebAssembly, and web workers, Toto Translat
 
 ## How to Use
 1.	After installing the extension, navigate to any webpage that contains text.
-2.	Wait for the LLM download process to complete — this only happens the first time
-3.	**Click on the text** you want to translate **while** **holding down the *Alt (or Option for Mac) key*** to activate the translator.
+2.	**Click on the text** you want to translate **while** **holding down the *Alt (or Option for Mac) key*** to activate the translator.
+3.	Wait for the LLM download process to complete — this only happens the first time
 4.	The translated text will appear below the original content.
 
 Note: The extension uses a local machine learning model that runs directly in your browser, so the first time might take some time to download and load the model.
