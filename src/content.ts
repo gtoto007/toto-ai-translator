@@ -19,14 +19,12 @@ let InitRetryCounter = 0;
 
 async function init() {
     if (isInitializing) {
-        console.log('Engine initialization already in progress');
-        return;
+        throw new Error('Engine initialization already in progress');
     }
     isInitializing = true;
 
     if (InitRetryCounter > 3) {
-        console.log('Too many retry init. Please try to reload your browser.');
-        return false;
+        throw new Error('Too many retry init. Please try to reload your browser.');
     }
     try {
         //a workaround to be ensure the worker is enabled.
@@ -44,6 +42,20 @@ async function init() {
     } catch (error) {
         InitRetryCounter++;
         console.log('Error initializing engine:', error);
+        if (error instanceof Error) {
+            error = error.message;
+        }
+
+        const errorMessage= error instanceof Error ? error.message : String(error);
+
+        if(errorMessage.includes('CompileError')){
+            throw error
+        }
+
+        if(InitRetryCounter >3){
+            throw new Error('Too many retry init. Please try to reload your browser. ERROR: ' + errorMessage);
+        }
+
         resetWorker();
     } finally {
         isInitializing = false;
@@ -95,7 +107,7 @@ async function translateContent(element: HTMLElement) {
     // Use the engine to translate the text
     try {
         if (!llm) {
-            if(!await init() || !llm) {
+            if (!await init() || !llm) {
                 throw new Error('Engine not initialized yet, please wait and try again.');
             }
         }
@@ -168,17 +180,15 @@ function waitingMessage() {
 function setupReconnectionHandlers() {
     // Listen for pageshow events with persisted=true (page restored from bfcache)
     window.addEventListener('pageshow', (event) => {
-        if (event.persisted) {
-            console.log('Page was restored from back/forward cache, reconnecting WebLLM...');
-            init();
+        if (event.persisted && llm) {
+            llm = undefined
         }
     });
 
     // Listen for visibility changes
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && !llm) {
-            console.log('Page became visible and WebLLM is not initialized, reconnecting...');
-            init();
+        if (document.visibilityState === 'visible' && llm) {
+            llm = undefined
         }
     });
 
