@@ -6,60 +6,38 @@ import WebLLM from './WebLLM';
 import {getConfig} from './config';
 
 
-// Create a progress bar element
-const progressBar = new ProgressBarUI();
-
 const validTextElements = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'ARTICLE', 'SECTION', 'LI', 'FIGCAPTION', 'FONT', 'I', 'A'];
 // Initialize the engine
 let llm: WebLLM | undefined;
 let isInitializing = false;
 
+let requestToResetWorker = false;
+
 let InitRetryCounter = 0;
 
 
-async function init() {
+async function init(translateContainer?: HTMLElement) {
     if (isInitializing) {
         throw new Error('Engine initialization already in progress');
     }
     isInitializing = true;
 
-    if (InitRetryCounter > 3) {
-        throw new Error('Too many retry init. Please try to reload your browser.');
+
+    //a workaround to be ensure the worker is enabled.
+    let port = chrome.runtime.connect({name: "popup-connection"});
+    let config = await getConfig();
+    if (!config.enablePageTranslation) {
+        return false
     }
-    try {
-        //a workaround to be ensure the worker is enabled.
-        let port = chrome.runtime.connect({name: "popup-connection"});
-        let config = await getConfig();
-        if (!config.enablePageTranslation) {
-            return false
-        }
-        console.log("WebLLM engine initializing with model ", config.modelName, " please wait...")
-        llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), config.modelName);
-        addExtensionDisabledListener();
-        progressBar.hide();
-        InitRetryCounter = 0;
-        return true;
-    } catch (error) {
-        InitRetryCounter++;
-        console.log('Error initializing engine:', error);
-        if (error instanceof Error) {
-            error = error.message;
-        }
+    // Create a progress bar element
+    const progressBar = new ProgressBarUI(translateContainer);
+    console.log("WebLLM engine initializing with model ", config.modelName, " please wait...")
+    llm = await WebLLM.createAsync(progressBar.showProgress.bind(progressBar), config.modelName);
+    addExtensionDisabledListener();
+    progressBar.hide();
 
-        const errorMessage= error instanceof Error ? error.message : String(error);
-
-        if(errorMessage.includes('CompileError')){
-            throw error
-        }
-
-        if(InitRetryCounter >3){
-            throw new Error('Too many retry init. Please try to reload your browser. ERROR: ' + errorMessage);
-        }
-
-        resetWorker();
-    } finally {
-        isInitializing = false;
-    }
+    isInitializing = false;
+    return true;
 }
 
 
@@ -92,22 +70,64 @@ function hasDirectText(elem: HTMLElement) {
     );
 }
 
+function buildTranslatorBox() {
+    const translatorContainer = document.createElement('div');
+    translatorContainer.className = 'toto-translator-container';
+    // Create loading text with spinner
+    const loadingDiv = document.createElement('div');
+    loadingDiv.style.display = 'flex';
+    loadingDiv.style.alignItems = 'center';
+    loadingDiv.style.marginBottom = '12px';
+
+
+    const spinner = document.createElement('div');
+    spinner.style.width = '14px';
+    spinner.style.height = '14px';
+    spinner.style.border = '2px solid #ccc';
+    spinner.style.borderTop = '2px solid #4CAF50';
+    spinner.style.borderRadius = '50%';
+    spinner.style.marginRight = '8px';
+    spinner.style.animation = 'spin 1s linear infinite';
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+`;
+    document.head.appendChild(style);
+
+
+    const loadingText = document.createElement('span');
+    loadingText.id = "toto-loading-text";
+    loadingText.textContent = 'Translating...';
+
+    loadingDiv.appendChild(spinner);
+    loadingDiv.appendChild(loadingText);
+    translatorContainer.appendChild(loadingDiv);
+    return translatorContainer;
+}
+
 async function translateContent(element: HTMLElement) {
     if (!element.textContent || !element.parentNode)
         return;
 
     // @ts-ignore
     const paragraphText = element.textContent
-    const translatorContainer = document.createElement('div');
-    translatorContainer.className = 'toto-translator-container';
-    const {message, dotsInterval} = waitingMessage();
-    translatorContainer.appendChild(message);
-    element.parentNode.insertBefore(translatorContainer, element.nextSibling);
+    const translatorBox = buildTranslatorBox();
+
+    element.parentNode.insertBefore(translatorBox, element.nextSibling);
+
+    if (requestToResetWorker) {
+        llm = undefined;
+        await resetWorker()
+        requestToResetWorker = false
+    }
 
     // Use the engine to translate the text
     try {
         if (!llm) {
-            if (!await init() || !llm) {
+            if (!await init(translatorBox) || !llm) {
                 throw new Error('Engine not initialized yet, please wait and try again.');
             }
         }
@@ -117,6 +137,7 @@ async function translateContent(element: HTMLElement) {
         if (llm.modelName != config.modelName) {
             throw new Error('Model changed, please wait that the model is loaded and try again.');
         }
+
 
         const translationPrompt =
             `**Role:** Expert ${config.targetLanguage} Translator & Corrector for ${config.sourceLanguage} text.
@@ -139,17 +160,14 @@ async function translateContent(element: HTMLElement) {
 
         await llm.sendMessage(translationPrompt, (translation) => {
             // Clear the loading spinner and set the translation text
-            translatorContainer.textContent = translation;
+            translatorBox.textContent = translation;
         });
 
-        // Clear the interval when translation is complete
-        clearInterval(dotsInterval);
 
     } catch (error) {
         console.error('Error during translation:', error);
-        translatorContainer.textContent = error instanceof Error ? error.message : String(error);
-        if (llm)
-            resetWorker()
+        translatorBox.textContent = error instanceof Error ? error.message : String(error);
+        requestToResetWorker = true;
     }
 }
 
@@ -235,16 +253,26 @@ function retrieveElementToTranslate(elem: HTMLElement) {
 }
 
 
-async function resetWorker() {
+async function resetWorker(): Promise<unknown> {
     console.log('resetting worker');
     try {
-        chrome.runtime.sendMessage({type: 'webllm-connection-lost', timestamp: Date.now()}, (response) => {
-            console.log('Initilization again after connection lost event received:', response)
-            init();
+        // Wrap the chrome.runtime.sendMessage in a Promise
+        return await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage(
+                {type: 'webllm-connection-lost', timestamp: Date.now()},
+                (response) => {
+                    if (chrome.runtime.lastError) {
+                        reject(chrome.runtime.lastError);
+                    } else {
+                        resolve(response);
+                    }
+                }
+            );
         });
+
     } catch (e) {
         console.error('Exception while sending message:', e);
+        throw e; // Re-throw the error so it can be caught by the caller
     }
-
 }
 
