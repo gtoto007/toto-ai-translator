@@ -19,13 +19,24 @@ export default class WebLLM {
 
     private async setup(modelName: string, initProgressCallback: (report: InitProgressReport) => void): Promise<void> {
         try {
-            this.modelName =modelName;
+            this.modelName = modelName;
             this.engine = await CreateExtensionServiceWorkerMLCEngine(modelName, {initProgressCallback: initProgressCallback},);
         } catch (error) {
             console.log("WEBLLM ERROR", error);
+            
+            // Enhance error message for GPU compatibility issues
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            
+            // Check for GPU compatibility issues
+            if (errorMessage.includes("WebGPU") || 
+                errorMessage.includes("GPU") || 
+                errorMessage.includes("device creation")) {
+                throw new Error("GPU compatibility issue: It appears that WebGPU is not enabled in your browser. If you're using Chrome, please go to chrome://settings/system and enable 'Use graphics acceleration when available'. Then restart your browser and try again.");
+            }
+            
+            // If no specific error is identified, throw the original error
             throw error;
         }
-
     }
 
     public async unload(){
