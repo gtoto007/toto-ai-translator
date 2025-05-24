@@ -19,7 +19,7 @@ By leveraging graphics acceleration, WebAssembly, and web workers, Toto Translat
 # User Guide
 
 ## Installation
-1. Download the [release ZIP file](https://github.com/gtoto007/toto-ai-translator/releases/download/1.1.0/toto-ai-translator-v-1.1.0.zip)
+1. Download the [release ZIP file](https://github.com/gtoto007/toto-ai-translator/releases/download/1.1.1/toto-ai-translator-v-1.1.1.zip)
 2. Unzip the file
 3. Load in Chrome/Edge/Brave via chrome://extensions/ (Developer mode)
 4. Click "Load unpacked" and select the extracted folder
