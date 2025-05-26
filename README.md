@@ -43,30 +43,6 @@ Click the extension icon in your browser toolbar to access settings:
 - **Source Language**: The original language of content you're viewing
 - **Target Language**: Your desired translation language
 
----
-
-# Developer Guide
-
-## Prerequisites
-
-- Node.js
-- Yarn package manager
-
-## Loading the Extension
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/gtoto007/toto-translator.git
-   cd toto-translator
-   ```
-2. Build the extension by running:
-   ```bash
-   yarn install && yarn build:dev
-   ```
-3. Open Chrome, Edge, or Brave and go to:  
-   `chrome://extensions/`
-4. Enable **Developer mode** (toggle switch in the top right).
-5. Click **Load unpacked** and select the `dist` directory inside the project folder.
-
 
 ## Technology Stack
 
