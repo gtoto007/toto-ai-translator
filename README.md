@@ -14,7 +14,6 @@ By leveraging graphics acceleration, WebAssembly, and web workers, Toto Translat
 - ✅ **Translation**: Translate text directly on any webpage in any language by using local LLM
 - ✅ **Privacy-First**: All processing happens locally on your device
 - ✅ **Simple Interface**: Just Alt (or Option)+Click on any text to translate
-- 
 
 # User Guide
 
@@ -36,7 +35,7 @@ Note: The extension uses a local machine learning model that runs directly in yo
 
 Click the extension icon in your browser toolbar to access settings:
 
-<img src="images/setting.jpg" alt="setting.jpg" style="max-width: 350px;" />
+<img src="images/setting.jpg" alt="setting.jpg" style="width: 450px;" />
 
 ### Available Options:
 
